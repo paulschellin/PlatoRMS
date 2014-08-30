@@ -43,14 +43,13 @@ class RNode {
 
   public:
 	
-	typedef ... UuidT;
+	typedef std::size_t UuidT;
 
 	UuidT uuid;
 
-	RNode (void)
-	{
+	RNode () = delete
 
-	}
+	RNode (std::size_t in_uuid) : uuid(in_uuid) {}
 
 	friend
 	std::ostream&

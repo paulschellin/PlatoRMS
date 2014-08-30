@@ -34,7 +34,7 @@ ld_flags=-Wall -Wextra -ggdb
 
 include_dirs=-I. -I src/
 
-boost_libs=-lboost_iostreams -lboost_serialization
+boost_libs=-lboost_program_options -lboost_system -lboost_iostreams -lboost_filesystem -lboost_serialization
 
 libs=$(boost_libs)
 

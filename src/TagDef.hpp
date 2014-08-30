@@ -4,7 +4,6 @@
 
 #include <iostream>
 #include <string>
-#include <vector>
 
 
 //#define TAGDEF_USE_BOOST_SERIALIZE 1
@@ -57,7 +56,10 @@ class TagDef {
 
 	TagDef (void) = delete;
 
-	TagDef (const StringT& name_in, const StringT& type_in = StringT("None"), const StringT& desc_in = StringT("(none)"))
+	TagDef ( const StringT& name_in
+			, const StringT& type_in = StringT("None")
+			, const StringT& desc_in = StringT("(none)")
+			)
 		: name (name_in)
 		, type (type_in)
 		, description (desc_in)
@@ -85,22 +87,4 @@ class TagDef {
 	
 };
 
-namespace ExampleTags {
 
-	std::vector<TagDef> NormalTags = { TagDef("file size", "bytes")
-								 , TagDef("executable", "bool")
-									 , TagDef("readable", "bool")
-								, TagDef("writable", "bool")
-								, TagDef("user")
-								, TagDef("atime", "ns")
-								, TagDef("ctime", "ns")
-								, TagDef("mtime", "ns")
-								, TagDef("color")
-								, TagDef("media")
-								, TagDef("tv")
-								, TagDef("music")
-								, TagDef("extension", "string")
-								, TagDef("picture")
-								, TagDef("document")};
-
-}

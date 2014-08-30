@@ -1,19 +1,11 @@
-
-
 #pragma once
 
+//#define RNODE_USE_BOOST_SERIALIZE 1
+
 #include <iostream>
-
 #include <string>
-#include <vector>
 
-#include <boost/filesystem.hpp>
-
-
-#define PFILE_USE_BOOST_SERIALIZE 1
-
-
-#ifdef PFILE_USE_BOOST_SERIALIZE 
+#ifdef RNODE_USE_BOOST_SERIALIZE
 	#include <boost/archive/text_oarchive.hpp>
 	#include <boost/archive/text_iarchive.hpp>
 
@@ -33,21 +25,17 @@
 #endif
 
 
-
-
 class RNode {
 
-#ifdef PFILE_USE_BOOST_SERIALIZE
-
+#ifdef RNODE_USE_BOOST_SERIALIZE
   private:
 	friend class boost::serialization::access;
 
-	template <typename Archive>
-	void serialize (Archive& ar, const unsigned in //version
-	) {
-		ar & name;
-		ar & fs_path;
-		ar & fs_path_boost;
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int //version
+	)
+	{
+		ar & BOOST_SERIALIZATION_NVP(uuid);
 	}
 
 #endif
@@ -55,58 +43,29 @@ class RNode {
 
   public:
 	
-	//namespace fs = boost::filesystem;
-  	
-	typedef std::string StringT;
+	typedef ... UuidT;
 
-	StringT name;
-	StringT fs_path;
+	UuidT uuid;
 
-	boost::filesystem::path fs_path_boost;
-
-	RNode (void) = delete;
-
-	RNode (const StringT& name_in, const StringT& fs_path_in = StringT(""), const boost::filesystem::path& fs_path_boost_in = boost::filesystem::path())
-		: name (name_in)
-		, fs_path (fs_path_in)
-		, fs_path_boost (fs_path_boost_in)
+	RNode (void)
 	{
 
 	}
-
 
 	friend
 	std::ostream&
 	operator<< (std::ostream& os, const RNode& obj)
 	{
-		os << "RNode: {" << obj.name << ", " << obj.fs_path << ", " << obj.fs_path_boost << "}";
+		os << "RNode: {UUID=" << obj.uuid << "}";
 		return os;
 	}
-
 
 	friend
 	bool
 	operator< (const RNode& lhs, const RNode& rhs)
 	{
-		return ( lhs.fs_path < rhs.fs_path );
-
+		return ( lhs.uuid < rhs.uuid );
 	}
+
+
 };
-
-
-
-struct recursive_directory_range {
-	typedef boost::filesystem::recursive_directory_iterator iterator;
-
-	recursive_directory_range (boost::filesystem::path p)
-		: p_ (p)
-	{ }
-
-	iterator begin() { return boost::filesystem::recursive_directory_iterator(p_); }
-
-	iterator end() { return boost::filesystem::recursive_directory_iterator(); }
-
-	boost::filesystem::path p_;
-};
-
-

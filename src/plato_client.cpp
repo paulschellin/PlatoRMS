@@ -50,6 +50,7 @@ int main ()
 
 	*/
 	
+	/*
 	typedef bi::string KeyType;
 	//typedef std::string KeyType;
 	typedef bi::string MappedType;
@@ -62,6 +63,9 @@ int main ()
 
 
 	typedef bi::map<KeyType, MappedType, std::less<KeyType>, ShmemAllocator> MyMap;
+	*/
+
+	using namespace PlatoDaemon;
 
 	/*
 	//	Initialize the shared memory STL-compatible allocator
@@ -95,7 +99,7 @@ int main ()
 	MyMap* mymap = segment.find<MyMap>("MyMap").first;
 
 	
-	std::cout << "Distance: " << std::distance(mymap, segment.find<MyMap>("MyMap").second) << std::endl;
+	//std::cout << "Distance: " << std::distance(mymap, segment.find<MyMap>("MyMap").second) << std::endl;
 
 	
 	//std::copy( mymap->begin(), mymap->end(), std::ostream_iterator<ValueType>(std::cout, "\n"));

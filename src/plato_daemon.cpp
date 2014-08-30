@@ -30,6 +30,10 @@
 */
 
 
+/*
+	http://www.boost.org/doc/libs/1_44_0/doc/html/interprocess/allocators_containers.html#interprocess.allocators_containers.containers_explained.containers_of_containers
+ */
+
 
 
 int main (int argc, char* argv[])
@@ -136,7 +140,7 @@ int main (int argc, char* argv[])
 	SharedValueTypeAllocator alloc_vt_inst (segment->get_segment_manager());
 
 
-	SharedCharAllocator alloc_char_inst (segment->get_segment_manager());
+	//SharedCharAllocator alloc_char_inst (segment->get_segment_manager());
 	//SharedCharAllocator alloc_val_inst (segment->get_segment_manager());
 
 
@@ -155,28 +159,54 @@ int main (int argc, char* argv[])
 	 */
 
 	//bi::map<KeyType, Mappedtype, std::less<KeyType> >* myComparisonMap = new
-	auto* myComparisonMap = new bi::map<KeyType, MappedType>();
+//	auto* myComparisonMap = new std::map<std::string, std::string>();
+	//auto* myComparisonMap = new bi::map<KeyType, MappedType>();
+
+/*
+	myComparisonMap->insert(std::make_pair("FileMap", "hpp"));
+	myComparisonMap->insert(std::make_pair("ExampleTagDefs", "hpp"));
+	myComparisonMap->insert(std::make_pair("PFile", "hpp"));
+	myComparisonMap->insert(std::make_pair("PlatoDB", "hpp"));
+	myComparisonMap->insert(std::make_pair("PlatoDB_RuntimeConfig", "hpp"));
+	myComparisonMap->insert(std::make_pair("RNode", "hpp"));
+	myComparisonMap->insert(std::make_pair("SimpleDB", "hpp"));
+	myComparisonMap->insert(std::make_pair("TagDef", "hpp"));
+	myComparisonMap->insert(std::make_pair("TagMap", "hpp"));
+	myComparisonMap->insert(std::make_pair("old_RNode", "hpp"));
 
 
-	myComparisonMap->insert(ValueType("FileMap", "hpp"));
-	myComparisonMap->insert(ValueType("ExampleTagDefs", "hpp"));
-	myComparisonMap->insert(ValueType("PFile", "hpp"));
-	myComparisonMap->insert(ValueType("PlatoDB", "hpp"));
-	myComparisonMap->insert(ValueType("PlatoDB_RuntimeConfig", "hpp"));
-	myComparisonMap->insert(ValueType("RNode", "hpp"));
-	myComparisonMap->insert(ValueType("SimpleDB", "hpp"));
-	myComparisonMap->insert(ValueType("TagDef", "hpp"));
-	myComparisonMap->insert(ValueType("TagMap", "hpp"));
-	myComparisonMap->insert(ValueType("old_RNode", "hpp"));
+	myComparisonMap->insert(std::make_pair("dynamic_type_system_test", "cpp"));
+	myComparisonMap->insert(std::make_pair("exterminator_ref", "cpp"));
+	myComparisonMap->insert(std::make_pair("first_attempt", "cpp"));
+	myComparisonMap->insert(std::make_pair("perf_db_test", "cpp"));
+	myComparisonMap->insert(std::make_pair("plato_client", "cpp"));
+	myComparisonMap->insert(std::make_pair("plato_daemon", "cpp"));
+*/
+
+	std::vector< std::pair< const std::string, const std::string > > stringPairVec = {
+			{"FileMap", "hpp"}
+
+		, {"FileMap", "hpp"}
+		, {"ExampleTagDefs", "hpp"}
+		, {"PFile", "hpp"}
+		, {"PlatoDB", "hpp"}
+		, {"PlatoDB_RuntimeConfig", "hpp"}
+		, {"RNode", "hpp"}
+		, {"SimpleDB", "hpp"}
+		, {"TagDef", "hpp"}
+		, {"TagMap", "hpp"}
+		, {"old_RNode", "hpp"}
 
 
-	myComparisonMap->insert(ValueType("dynamic_type_system_test", "cpp"));
-	myComparisonMap->insert(ValueType("exterminator_ref", "cpp"));
-	myComparisonMap->insert(ValueType("first_attempt", "cpp"));
-	myComparisonMap->insert(ValueType("perf_db_test", "cpp"));
-	myComparisonMap->insert(ValueType("plato_client", "cpp"));
-	myComparisonMap->insert(ValueType("plato_daemon", "cpp"));
+		, {"dynamic_type_system_test", "cpp"}
+		, {"exterminator_ref", "cpp"}
+		, {"first_attempt", "cpp"}
+		, {"perf_db_test", "cpp"}
+		, {"plato_client", "cpp"}
+		, {"plato_daemon", "cpp"}
+		};
 
+/*
 	for (auto kvPair : *myComparisonMap)
 	{
 		std::cout << "{ " << kvPair.first << " : " << kvPair.second << " }" << std::endl;
@@ -215,14 +245,60 @@ int main (int argc, char* argv[])
 	std::cout << totalMem;
 
 	std::cout << std::endl;
+*/
 
+
+	
+
+
+
+
+	SharedVoidAllocator alloc_void_inst (segment->get_segment_manager());
 
 	MyMap* mymap = segment->find_or_construct<MyMap>("MyMap")	//	Object name
-												(std::less<KeyType>(), alloc_vt_inst);
+												(std::less<KeyType>()
+												, alloc_void_inst);
+												//, alloc_vt_inst);
+
 
 	
+	//SharedCharAllocator alloc_char_inst (segment->get_segment_manager());
+
+
+	//for (auto kv : *myComparisonMap)
+	for (auto kv : stringPairVec)
+	{
+	
+		SharedStringT	key_object		(kv.first.begin(), kv.first.end(), alloc_void_inst);
+		SharedStringT	mapped_object	(kv.second.begin(), kv.second.end(), alloc_void_inst);
+		
+		//SharedStringT	key_object		(kv.first.c_str(), alloc_void_inst);
+		//SharedStringT	mapped_object	(kv.second.c_str(), alloc_void_inst);
+
+		//SharedStringT	key_object		(alloc_void_inst);
+		//SharedStringT	mapped_object	(alloc_void_inst);
+
+		//mymap->at(key_object) = mapped_object;
+		
+		//mymap->insert( std::make_pair(key_object, mapped_object) );
+
+		//mymap->emplace(key_object, mapped_object);
+
+
+		
+		ValueType		kv_object		(key_object, mapped_object);
+		mymap->insert(kv_object);
+		
+
+		//kv_object.first = kv.first.c_str();
+		//kv_object.second = kv.second.c_str();
+
+
 
 	
+	}
+
+	/*
 	mymap->insert(ValueType("FileMap", "hpp"));
 	mymap->insert(ValueType("ExampleTagDefs", "hpp"));
 	mymap->insert(ValueType("PFile", "hpp"));
@@ -241,7 +317,7 @@ int main (int argc, char* argv[])
 	mymap->insert(ValueType("perf_db_test", "cpp"));
 	mymap->insert(ValueType("plato_client", "cpp"));
 	mymap->insert(ValueType("plato_daemon", "cpp"));
-
+	*/
 	
 	
 

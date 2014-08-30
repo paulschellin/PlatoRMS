@@ -30,6 +30,8 @@ namespace PlatoDaemon {
 
 	typedef bi::allocator<char, bi::managed_shared_memory::segment_manager> SharedCharAllocator;
 
+	typedef bi::allocator<void, bi::managed_shared_memory::segment_manager> SharedVoidAllocator;
+
 	typedef bi::basic_string<
 						  char
 						, std::char_traits<char>
@@ -37,11 +39,12 @@ namespace PlatoDaemon {
 						> SharedStringT;
 
 
-	typedef SharedStringT KeyType;
+	typedef const SharedStringT KeyType;
 	typedef SharedStringT MappedType;
 
 
-	typedef std::pair<const KeyType, MappedType> ValueType;
+	typedef std::pair<KeyType, MappedType> ValueType;
+	//typedef std::pair<const KeyType, MappedType> ValueType;
 
 	typedef bi::allocator<ValueType, bi::managed_shared_memory::segment_manager> SharedValueTypeAllocator;
 

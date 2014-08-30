@@ -1,10 +1,10 @@
 
 
-g++ -std=c++11 -ggdb -Wall -I src/ src/plato_daemon.cpp -o bin/plato_daemon
+# g++ -std=c++11 -ggdb -Wall -I src/ src/plato_daemon.cpp -o bin/plato_daemon
 
-g++ -std=c++11 -Wall -I src/ src/plato_client.cpp -o bin/plato_client
+# g++ -std=c++11 -Wall -I src/ src/plato_client.cpp -o bin/plato_client
 
-
+# CXX=g++-4.9
 
 source_dir=src/
 output_dir=bin/

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<!DOCTYPE boost_serialization>
+<boost_serialization signature="serialization::archive" version="10">
+<allTags class_id="0" tracking_level="0" version="0">
+	<count>6</count>
+	<item_version>0</item_version>
+	<item class_id="1" tracking_level="0" version="0">
+		<first>ebook</first>
+		<second class_id="2" tracking_level="0" version="0">
+			<tagName>ebook</tagName>
+			<tagDescription>File contains some sort of ebook data.</tagDescription>
+			<tagType>None</tagType>
+		</second>
+	</item>
+	<item>
+		<first>media</first>
+		<second>
+			<tagName>media</tagName>
+			<tagDescription>File contains some sort of media data.</tagDescription>
+			<tagType>None</tagType>
+		</second>
+	</item>
+	<item>
+		<first>movie</first>
+		<second>
+			<tagName>movie</tagName>
+			<tagDescription>File contains some sort of movie data.</tagDescription>
+			<tagType>None</tagType>
+		</second>
+	</item>
+	<item>
+		<first>music</first>
+		<second>
+			<tagName>music</tagName>
+			<tagDescription>File contains some sort of music data.</tagDescription>
+			<tagType>None</tagType>
+		</second>
+	</item>
+	<item>
+		<first>tv</first>
+		<second>
+			<tagName>tv</tagName>
+			<tagDescription>File contains some sort of tv data.</tagDescription>
+			<tagType>None</tagType>
+		</second>
+	</item>
+	<item>
+		<first>video</first>
+		<second>
+			<tagName>video</tagName>
+			<tagDescription>File contains some sort of video data.</tagDescription>
+			<tagType>None</tagType>
+		</second>
+	</item>
+</allTags>

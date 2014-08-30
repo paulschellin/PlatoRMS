@@ -1,0 +1,280 @@
+
+
+
+When writing the database portion of Plato in C++, several boost libraries
+could be used:
+
+	=== boost::containers ===
+
+
+
+	===	boost::bimap ===
+
+
+	=== boost::multi_index ===
+
+
+	=== boost::property_map ===
+
+
+
+	=== boost::dynamic_properties ===
+
+
+
+	=== boost::any ===
+
+
+
+"Why you shouldn't use set (and what you should use instead)"
+http://lafstern.org/matt/col1.pdf
+
+
+At the most basic level, several things are needed:
+
+
+	Tag definition class
+
+	File class
+
+	A container of tag definition objects
+		- set, possibly unordered_set ?
+
+	A container of file objects
+
+	Some mapping from a tag to files, along with the value instance
+
+	Some mapping from a file to tags, along with the value instance
+
+
+	Because both tags and files do not need to have relationship instances in
+	order to stay alive, it seems likely that no dynamic memory should be
+	needed for the tag def objects and the file objects, and that means no
+	need for smart pointers.
+
+	
+	It's also perhaps a good idea to maintain two separate database components,
+	one for label tags, the other for attribute tags.
+
+
+	The value instances must be referenced in both mappings, and doing so may
+	required the use of smart pointers.
+
+
+
+If there's a TagInstance class, then the tag instance will have the following structure:
+
+class TagDef {
+	std::string name;
+	std::string value_type;
+	std::string description;
+};
+
+
+class FileDef {
+	//	Note that there needs to be another member which allows for more
+	//	generalized file handling. It might be a file of another file system
+	//	(it may be a virtual file on top of that), or it might be an item on
+	//	a Plato-formatted disk.
+	std::string 			file_name;
+	boost::filesystem::path file_path;
+};
+
+
+class TagInstance {
+	const TagDef& tag;
+	const FileDef& file;
+
+	std::string value;
+
+	struct tag_names {};
+	struct file_names {};
+	struct values {};
+
+	struct tag_name_hash {};
+	struct file_name_hash {};
+};
+
+
+struct tag_name {
+	typedef std::string result_type;
+
+	result_type
+	operator() (const TagInstance& inst) const
+	{
+		return inst.tag.name;
+	}
+};
+
+struct file_name {
+	typedef std::string result_type;
+
+	result_type
+	operator() (const TagInstance& inst) const
+	{
+		return inst.file.file_name;
+	}
+};
+
+Then you could use multi_index:
+
+
+typedef multi_index_container
+			< TagInstance
+			, indexed_by
+				//< ordered_unique< identity< TagInstance > >
+				< ordered_unique< member< TagInstance, 
+				, ordered_unique< member< TagInstance, std::string, &TagInstance::value >
+			//	, ordered_non_unique< tag< TagInstance::tag_names >, member< TagInstance, , >
+			//	, ordered_non_unique< tag< TagInstance::file_names >, member< TagInstance, , >
+				, ordered_non_uniuqe< tag_name >
+				, ordered_non_unique< file_name >
+				, ordered_non_unique< tag< TagInstance::values >, member< TagInstance, &TagInstance::value >
+				>
+			> tag_instance_set;
+
+
+Keep in mind that in this configuration, on average the TagDef and FileDef
+objects will be inserted and removed fairly infrequently, but read often.
+On the other hand, the container of the TagInstance objects must have good
+insertion and removal properties, and still depends heavily on lookups, and
+reads.
+
+"random_access"
+"sequenced"
+"ordered_unique"
+"ordered_non_unique"
+"hashed_unique"
+"hashed_non_unique"
+
+
+"identity"
+"member"
+"mem_fun"
+"global_fun"
+"const_mem_fun"
+"composite_key"
+
+
+
+A good example for use with boost::interprocess can be found here:
+http://www.boost.org/doc/libs/1_42_0/libs/multi_index/example/ip_allocator.cpp
+
+
+Also, even using boost::filesystem, there doesn't seem to be a way to uniquely
+address files that will work in every situation, so it's likely that
+boost::uuid can be used to remedy this.
+
+
+Sketch:
+
+struct TagDef {};
+
+std::set <TagDef>				tags_set;
+std::unordered_set <TagDef>		tags_unordered_set;
+std::vector <TagDef>			tags_vector;
+std::list <TagDef>				tags_list;
+
+
+struct FileDef {};
+
+std::set <FileDef>				files_set;
+std::unordered_set <FileDef>	files_unordered_set;
+std::vector <FileDef>			files_vector;
+std::list <FileDef>				files_list;
+
+
+
+std::map <TagDef&, std::set<FileDef&> >					tags_to_files_map_set;
+std::map <TagDef&, std::unordered_set<FileDef&> >		tags_to_files_map_unordered_set;
+std::map <TagDef&, std::vector<FileDef&> >				tags_to_files_map_vector;
+std::map <TagDef&, std::list<FileDef&> >				tags_to_files_map_list;
+
+
+std::unordered_map <TagDef&, std::set<FileDef&> >			tags_to_files_unordered_map_set;
+std::unordered_map <TagDef&, std::unordered_set<FileDef&> >	tags_to_files_unordered_map_unordered_set;
+std::unordered_map <TagDef&, std::vector<FileDef&> >		tags_to_files_unordered_map_vector;
+std::unordered_map <TagDef&, std::list<FileDef&> >			tags_to_files_unordered_map_list;
+
+
+std::map <FileDef&, std::set<TagDef&> >					files_to_tags_map_set;
+std::map <FileDef&, std::unordered_set<TagDef&> >		files_to_tags_map_unordered_set;
+std::map <FileDef&, std::vector<TagDef&> >				files_to_tags_map_vector;
+std::map <FileDef&, std::list<TagDef&> >				files_to_tags_map_list;
+
+
+std::unordered_map <FileDef&, std::set<TagDef&> >			files_to_tags_unordered_map_set;
+std::unordered_map <FileDef&, std::unordered_set<TagDef&> >	files_to_tags_unordered_map_unordered_set;
+std::unordered_map <FileDef&, std::vector<TagDef&> >		files_to_tags_unordered_map_vector;
+std::unordered_map <FileDef&, std::list<TagDef&> >			files_to_tags_unordered_map_list;
+
+
+//	Probably could do some multimap implementations as well.
+
+
+
+
+
+
+The boost libraries not necessarily related to databases but still useful for
+the system:
+
+	 [ ] boost::serialization
+	 [ ] boost::filesystem
+	 [ ] boost::format
+	 [ ] boost::range
+	 [ ] boost::log
+	 [ ] boost::program_options
+	 [ ] boost::accumulators
+	 		for collecting information on the filesystems
+	 [ ] boost::atomic
+	 		for transactional updates
+	 [ ] boost::asio
+	 		for internet database access
+	 [ ] boost::chrono
+	 		for timestamping things
+	 [ ] boost::circular_buffer
+	 		for journaling
+	 [ ] boost::crc
+	 [ ] boost::coroutine
+	 [ ] boost::date_time
+	 [ ] boost::iostreams
+	 		for writing to/from disk with streams
+	 [ ] boost::locale
+	 		for making localization support easier
+	 [ ] boost::lockfree
+	 		for lockfree data structures
+	 [ ] boost::min_max
+	 		for more efficient bound lookup
+	 [ ] boost::pool
+	 		for memory management with pools
+	 [ ] boost::regex
+	 [ ] boost::scope_exit
+	 [ ] boost::signals2
+
+
+	Maybe using mmap instead of boost::serialize might be better (from
+	 http://stackoverflow.com/a/13448893/2617340 )
+
+		It is unnecessary to use some special serialization libraries, because your data is already serialized in the memory and you can get it as follows (suppose A is the array containing int data:
+
+		int *data = A.data();
+size_t size = A.num_elements();
+
+You can just write it one by one to a file. A better way may be using mmap, like follows:
+
+int fd = open("myfile", O_RDWR);
+size_t bytes = size * sizeof(int);
+ftruncate(fd, bytes);
+void *buf = mmap(NULL, bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+memcpy(buf, data, bytes);
+close(fd);
+munmap(buf, bytes);
+
+It is very easy to reload the data from file to A. Just ommit the invocation of ftruncate and call memcpy(data, buf, bytes);.
+
+An even better way is that, if your data is huge, you simply store the data in a file, use mmap to map it to a memory address, then pass the address to multi_array_ref. In this case you don't need to specifically write it to file. It is aromatically done by the OS.
+
+The above code is considered for Linux, but I believe other platforms should have similar functionality. Error checking is omitted for clarity.
+
+	"

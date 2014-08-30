@@ -1,0 +1,6 @@
+
+
+SELECT * FROM Files WHERE TagName='user' AND TagValue='paulschellin';
+
+
+SELECT * FROM Files WHERE Tag='user=paulschellin';

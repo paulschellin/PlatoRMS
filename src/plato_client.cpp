@@ -13,12 +13,10 @@
 #include <iterator>
 #include <iostream>
 
+#include <string>
+
 #include <plato_daemon_common.hpp>
 
-/*
-#include <TagMap.hpp>
-#include <FileMap.hpp>
-*/
 
 template <typename T>
 std::ostream&
@@ -104,9 +102,12 @@ int main ()
 	
 	//std::copy( mymap->begin(), mymap->end(), std::ostream_iterator<ValueType>(std::cout, "\n"));
 
-	for (auto kvPair : *mymap)
+	//for (auto kvPair : *mymap)
+	for (auto iter = mymap->begin(); iter != mymap->end(); ++iter)
 	{
-		std::cout << "{ " << kvPair.first << " : " << kvPair.second << " }" << std::endl;
+		std::cout << "{ " << std::string(iter->first.begin(), iter->first.end())
+				<< " : " << std::string(iter->second.begin(), iter->second.end())
+				<< " }" << std::endl;
 
 	}
 

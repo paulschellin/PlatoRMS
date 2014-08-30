@@ -1,7 +1,7 @@
 
 
 //////////////////////////////////////////////////////////////////////////////
-					Boost Interprocess Library Headers
+//					Boost Interprocess Library Headers
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/managed_shared_memory.hpp>
@@ -9,10 +9,10 @@
 #include <boost/interprocess/containers/map.hpp>
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/containers/string.hpp>
-
+#include <boost/interprocess/file_mapping.hpp>
 
 //////////////////////////////////////////////////////////////////////////////
-					Boost Logging Library Headers
+//					Boost Logging Library Headers
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/log/core.hpp>
@@ -28,26 +28,27 @@ namespace bl = boost::log;
 
 
 //////////////////////////////////////////////////////////////////////////////
-					Boost Program Option Library Headers
+//					Boost Program Option Library Headers
 //////////////////////////////////////////////////////////////////////////////
 
+#include <boost/version.hpp>			//	For BOOST_LIB_VERSION
 #include <boost/program_options.hpp>	//	Run-time options library (NOT header-only!)
 
 namespace po = boost::program_options;
 
 
 //////////////////////////////////////////////////////////////////////////////
-					Standard Library Headers
+//					Standard Library Headers
 //////////////////////////////////////////////////////////////////////////////
 
 #include <vector>
 #include <string>
 #include <utility>
 #include <cstdlib>	//	for std::exit()
-
+#include <exception>
 
 //////////////////////////////////////////////////////////////////////////////
-					-----
+//					-----
 //////////////////////////////////////////////////////////////////////////////
 
 
@@ -73,34 +74,134 @@ typedef map< char_string, char_string
            , std::less<char_string>, map_value_type_allocator>          shared_map_type;
 
 
-enum SubCommand {
-	cmdHelp, cmdStart, cmdStop, cmdRestart, cmdStatus
-};
-
-SubCommand
-arg_handler (int argc, char* argv[])
+int rc_handler (std::ostream& os, po::variables_map& vm, int ac, char* av[])
 {
-	std::string cmdStr = "help";
-	if (argc > 1) {
-		cmdStr = argv[1];
-	}
+	try {
+		po::options_description genOpts;
+		genOpts.add_options()
+			("help,h", po::value<std::string>()->implicit_value("help"), "")
+			//("command", po::value<std::string>(), "")
+			("start", "Start the Plato daemon. Will fail if already running.")
+			("stop", "Stop the Plato daemon. Will fail if not previously running.")
+			("restart", "Stop the Plato daemon, then start it up again. Will fail if not previously running.")
+			("status", "View information about the Plato daemon, such as if it is running, how much of its reserved memory it is using, and other things.")
+			//("verbose,v", "")
+			("version,V", "Print the version information.")
+			("input-file,i", "Specify the input file for serialization.")
+			("output-file,o", "Specify the output file for serialization.")
+			("log-file,l", "Specify the log file.")
+			("config-file", "Specify the runtime configuration file.")
+		;
+
+		po::options_description configOpts("Options to be specified in a configuration file");
+
+		configOpts.add_options()
+			("shared-memory-name", po::value<std::string>()->default_value("PlatoDaemonSharedMemory"), "")
+			("tag-map-name", po::value<std::string>()->default_value("PlatoTagMap"), "")
+			("file-map-name", po::value<std::string>()->default_value("PlatoFileMap"), "")
+			("start-up-buffer", po::value<float>()->default_value(1.0), "Pick the amount of headroom you want to have at startup.")
+		;
+
+		po::options_description cmdlineOpts;
+
+		cmdlineOpts.add(genOpts).add(configOpts);
+
+		po::options_description configFileOpts;
+		//configFileOpts.add(configOpts);
+		
+		po::options_description visibleOpts("Supported command-line options");
+		visibleOpts.add(genOpts);
+
+		//	Positional options
+		//po::positional_options_description posOpts;
+		//posOpts.add("command", 1);
+
+		po::store(po::command_line_parser(ac, av).options(cmdlineOpts).run(), vm);
+
+		po::notify(vm);
+
+		if (vm.count("help")) {
+			if (!vm["help"].as<std::string>().compare("help")) {
+			os << visibleOpts << std::endl;
+			os << "For additional options regarding config-files, run with \"--help config-files\"" << std::endl;
+			} else if ( ! vm["help"].as<std::string>().compare("config-files")) {
+				os << configOpts << std::endl;
+			}
+			exit(0);
+		}
+
+		if (vm.count("version")) {
+			os << "plato_daemon"
+				<< std::endl << "The Plato Semantic Resource Management System Daemon" << std::endl;
+			os << "Version "
+			#ifdef PLATO_DAEMON_VERSION_ID
+				<< PLATO_DAEMON_VERSION_ID;
+			#else
+				<< "<unspecified> (set preprocessor macro \"PLATO_DAEMON_VERSION_ID\" to specify version string)";
+			#endif
+			os << std::endl
+				<< "Compiled on " << __DATE__ << " at " << __TIME__ << std::endl
+				<< "Compiler version: " << __VERSION__ << std::endl
+				<< "Boost library version: " << BOOST_LIB_VERSION << std::endl
+				<< "Git commit: " 
+				#ifdef PLATO_DAEMON_GIT_COMMIT
+					<< PLATO_DAEMON_GIT_COMMIT 
+				#else
+					<< "<unspecified> (set preprocessor macro \"PLATO_DAEMON_GIT_COMMIT\" to specify version string)"
+				#endif
+				<< std::endl;
+			exit(0);
+		}
+
+		std::ifstream ifs (vm["config-file"].as<std::string>().c_str());
+
+		po::store(po::parse_config_file(ifs, configFileOpts), vm);
+
+	} catch (std::exception& e) {std::cerr << "error: " << e.what() << std::endl; std::exit(1);
+	} catch (...) {std::cerr << "Exception of unknown type occurred." << std::endl; std::exit(1);}
 	
-	if (cmdStr.compare("start") == 0)	return cmdStart;
-	if (cmdStr.compare("restart") == 0)	return cmdRestart;
-	if (cmdStr.compare("stop") == 0)	return cmdStop;
-	if (cmdStr.compare("status") == 0)	return cmdStatus;
-
-	std::cout << "Usage: " << argv[0] 
-		<< " [ \"start\" | \"stop\" | \"restart\" | \"status\" | \"help\" ]" << std::endl;
-	std::exit(1);
-
-	return cmdHelp;
+	return 0;
 }
 
-int main (int argc, char* argv[])
+/*
+init_logging()
 {
+	bl::add_console_log()->set_filter();
 
-	SubCommand subcmd = arg_handler (argc, argv);	
+	bl::add_file_log
+	(
+		bl::keywords::file_name = "",
+		bl::keywords::format = "[%TimeStamp%]: %Message%"
+	);
+
+	bl::core::get()->set_filter( bl::trivial::severity >= bl::trivial::info );
+};
+*/
+
+
+int command_handler (std::ostream& os, po::variables_map& vm)
+{
+	//auto cmdStr = vm["command"].as<std::string>();
+
+	if (vm.count("start")) {
+
+
+	} else
+	if (vm.count("stop")) {
+		shared_memory_object::remove(vm["shared-memory-name"].as<std::string>().c_str());
+		std::exit(0);
+	} else
+	if (vm.count("restart")) {
+		shared_memory_object::remove(vm["shared-memory-name"].as<std::string>().c_str());
+	} else
+	if (vm.count("status")) {
+
+		std::exit(0);
+	}
+
+	return 0;
+}
+
 
 	std::vector< std::pair< const std::string, const std::string > > spv = {
 		{"FileMap", "hpp"}
@@ -123,8 +224,30 @@ int main (int argc, char* argv[])
 		};
 
 
-	const unsigned shm_region_size = 1048576;
-	const std::string shm_region_name ("PlatoDaemonSharedMemory");
+int main (int argc, char* argv[])
+{
+	//	Take care of the runtime configuration settings.
+	po::variables_map vm;
+	rc_handler(std::cout, vm, argc, argv);
+
+
+	/*
+					How do we want to serialize and deserialize?
+
+			Should we read in the file first, then move it into shared memory?
+				That would probably take a lot of time and waste a lot of memory.
+			Should we read each object in element-by-element directly into the shared memory?
+				If we really are not able to change the memory dynamically, then we probably want to know how big all of the objects will be.
+
+
+	 */
+	
+	
+	command_handler(std::cout, vm);
+
+
+	unsigned shm_region_size_bytes = 1048576; // estimate_space_requirements();
+	const std::string shm_region_name (vm["shared-memory-name"].as<std::string>().c_str()); //("PlatoDaemonSharedMemory");
 
 
    //Remove shared memory on construction and destruction
@@ -136,10 +259,10 @@ int main (int argc, char* argv[])
    } remover;
 	*/
 
-	shared_memory_object::remove(shm_region_name.c_str());
+	//shared_memory_object::remove(shm_region_name.c_str());
 
    //Create shared memory
-   managed_shared_memory segment(create_only,shm_region_name.c_str(), shm_region_size);// shm_region_size);
+   managed_shared_memory segment(create_only,shm_region_name.c_str(), shm_region_size_bytes);// shm_region_size);
 
    //An allocator convertible to any allocator<T, segment_manager_t> type
    void_allocator alloc_inst (segment.get_segment_manager());

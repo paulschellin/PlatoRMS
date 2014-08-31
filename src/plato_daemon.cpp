@@ -451,7 +451,7 @@ int main (int argc, char* argv[])
 	}
 	catch (interprocess_exception& e)
 	{
-		std::cout << "Did start the daemon, the exception is: " << e.what() << std::endl; std::exit(1);
+		std::cout << "Did not start the daemon, the exception is: " << e.what() << std::endl; std::exit(1);
 	}
 	catch (...)
 	{
@@ -490,7 +490,7 @@ int main (int argc, char* argv[])
 
 	typedef list<TagDefT, TagDefTAlloc> ListTagDefT;
 
-	shared_map_type* tagArray = segment->construct<ListTagDefT>("TagDefArray")(alloc_inst);
+	ListTagDefT* tagArray = segment->construct<ListTagDefT>("TagDefArray")(alloc_inst);
 
 	
 
@@ -499,18 +499,18 @@ int main (int argc, char* argv[])
 
 	typedef list<RNode, RNodeAlloc> ListRNodeT;
 
-	shared_map_type* rnodeArray = segment->construct<ListRNodeT>("RNodeArray")(alloc_inst);
+	ListRNodeT* rnodeArray = segment->construct<ListRNodeT>("RNodeArray")(alloc_inst);
 
 	
 	
 	//	TagVal Array container
 	typedef TagVal<char_string> TagValT;
 
-	typedef allocator<TagValT, segment_manager_t> TagValTAlloc
+	typedef allocator<TagValT, segment_manager_t> TagValTAlloc;
 
 	typedef list<TagValT, TagValTAlloc> ListTagValT;
 
-	shared_map_type* tagValArray = segment->construct<ListTagValT>("TagValArray")(alloc_inst);
+	ListTagValT* tagValArray = segment->construct<ListTagValT>("TagValArray")(alloc_inst);
 
 	
 
@@ -529,7 +529,8 @@ int main (int argc, char* argv[])
 	typedef list<TagDefValPairT, TagDefValPairTAlloc> ListTagDefValPairT;
 	
 
-	
+	ListRNodeValPairT* rnodeValPairArray = segment->construct<ListRNodeValPairT>("RNodeValPairArray")(alloc_inst);
+	ListTagDefValPairT* tagDefValPairArray= segment->construct<ListTagDefValPairT>("TagDefValPairArray")(alloc_inst);
 
 
 

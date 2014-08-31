@@ -6,10 +6,25 @@
 
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
+
 #include <boost/interprocess/containers/map.hpp>
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/containers/string.hpp>
+#include <boost/interprocess/containers/deque.hpp>
+#include <boost/interprocess/containers/list.hpp>
+#include <boost/interprocess/containers/slist.hpp>
+
+#include <boost/interprocess/containers/set.hpp>
+#include <boost/interprocess/containers/flat_set.hpp>
+#include <boost/interprocess/containers/flat_map.hpp>
+
+
+#include <boost/interprocess/smart_ptr/shared_ptr.hpp>
+#include <boost/interprocess/smart_ptr/deleter.hpp>
+
+
 #include <boost/interprocess/file_mapping.hpp>
+#include <boost/interprocess/managed_mapped_file.hpp>
 
 //////////////////////////////////////////////////////////////////////////////
 //					Boost Logging Library Headers
@@ -42,16 +57,28 @@ namespace po = boost::program_options;
 //////////////////////////////////////////////////////////////////////////////
 
 #include <vector>
+#include <iostream>
+#include <fstream>
 #include <string>
 #include <utility>
 #include <cstdlib>	//	for std::exit()
 #include <exception>
+#include <memory>	//	for shared_ptr()
+
+
+//////////////////////////////////////////////////////////////////////////////
+//					Try another logging framework
+//////////////////////////////////////////////////////////////////////////////
+
+//#include <easylogging++.h>
+
+//_INITIALIZE_EASYLOGGINGPP
 
 //////////////////////////////////////////////////////////////////////////////
 //					-----
 //////////////////////////////////////////////////////////////////////////////
 
-
+#include <prototype_structs.hpp>
 
 using namespace boost::interprocess;
 
@@ -74,6 +101,11 @@ typedef map< char_string, char_string
            , std::less<char_string>, map_value_type_allocator>          shared_map_type;
 
 
+
+//////////////////////////////////////////////////////////////////////////////
+//						Runtime Configuration Handler
+//////////////////////////////////////////////////////////////////////////////
+
 int rc_handler (std::ostream& os, po::variables_map& vm, int ac, char* av[])
 {
 	try {
@@ -87,15 +119,17 @@ int rc_handler (std::ostream& os, po::variables_map& vm, int ac, char* av[])
 			("status", "View information about the Plato daemon, such as if it is running, how much of its reserved memory it is using, and other things.")
 			//("verbose,v", "")
 			("version,V", "Print the version information.")
-			("input-file,i", "Specify the input file for serialization.")
-			("output-file,o", "Specify the output file for serialization.")
-			("log-file,l", "Specify the log file.")
-			("config-file", "Specify the runtime configuration file.")
+			("mode,m", po::value<std::string>()->default_value("mmap"), "Specify either 'mmap' (memory mapped file), or 'shm' (shared memory).")
+			("input-file,i",	po::value<std::string>()->default_value("plato_daemon_datafile"),	"Specify the input file for serialization.")
+			("output-file,o",	po::value<std::string>()->default_value("plato_daemon_datafile"),	"Specify the output file for serialization.")
+			("log-file,l", 		po::value<std::string>()->default_value("plato_daemon.log"),	"Specify the log file.")
+			("config-file",		po::value<std::string>()->default_value("plato_daemon.conf"),	"Specify the runtime configuration file.")
 		;
 
 		po::options_description configOpts("Options to be specified in a configuration file");
 
 		configOpts.add_options()
+			("memory-mapped-filename", po::value<std::string>()->default_value("PlatoDaemonFile.mmap"), "")
 			("shared-memory-name", po::value<std::string>()->default_value("PlatoDaemonSharedMemory"), "")
 			("tag-map-name", po::value<std::string>()->default_value("PlatoTagMap"), "")
 			("file-map-name", po::value<std::string>()->default_value("PlatoFileMap"), "")
@@ -163,6 +197,11 @@ int rc_handler (std::ostream& os, po::variables_map& vm, int ac, char* av[])
 	return 0;
 }
 
+
+
+//////////////////////////////////////////////////////////////////////////////
+//						Initialize Logging
+//////////////////////////////////////////////////////////////////////////////
 /*
 init_logging()
 {
@@ -179,6 +218,11 @@ init_logging()
 */
 
 
+
+//////////////////////////////////////////////////////////////////////////////
+//						Run the Requested Command
+//////////////////////////////////////////////////////////////////////////////
+
 int command_handler (std::ostream& os, po::variables_map& vm)
 {
 	//auto cmdStr = vm["command"].as<std::string>();
@@ -189,10 +233,13 @@ int command_handler (std::ostream& os, po::variables_map& vm)
 	} else
 	if (vm.count("stop")) {
 		shared_memory_object::remove(vm["shared-memory-name"].as<std::string>().c_str());
+
+		os << "Stopped the daemon." << std::endl;
 		std::exit(0);
 	} else
 	if (vm.count("restart")) {
 		shared_memory_object::remove(vm["shared-memory-name"].as<std::string>().c_str());
+		os << "Temporarily stopped the daemon." << std::endl;
 	} else
 	if (vm.count("status")) {
 
@@ -202,6 +249,11 @@ int command_handler (std::ostream& os, po::variables_map& vm)
 	return 0;
 }
 
+
+
+//////////////////////////////////////////////////////////////////////////////
+//					-----
+//////////////////////////////////////////////////////////////////////////////
 
 	std::vector< std::pair< const std::string, const std::string > > spv = {
 		{"FileMap", "hpp"}
@@ -224,12 +276,19 @@ int command_handler (std::ostream& os, po::variables_map& vm)
 		};
 
 
+
+//////////////////////////////////////////////////////////////////////////////
+//						Main Function
+//////////////////////////////////////////////////////////////////////////////
+
 int main (int argc, char* argv[])
 {
 	//	Take care of the runtime configuration settings.
 	po::variables_map vm;
 	rc_handler(std::cout, vm, argc, argv);
 
+	//_START_EASYLOGGINGPP(argc, argv);
+	// Global Trace Debug Fatal Error Warning Info Verbose Unknown
 
 	/*
 					How do we want to serialize and deserialize?
@@ -247,8 +306,8 @@ int main (int argc, char* argv[])
 
 
 	unsigned shm_region_size_bytes = 1048576; // estimate_space_requirements();
-	const std::string shm_region_name (vm["shared-memory-name"].as<std::string>().c_str()); //("PlatoDaemonSharedMemory");
-
+	const std::string shm_region_name (vm["shared-memory-name"].as<std::string>().c_str());
+	const std::string mmaped_filename(vm["memory-mapped-filename"].as<std::string>().c_str());
 
    //Remove shared memory on construction and destruction
    /*
@@ -261,17 +320,228 @@ int main (int argc, char* argv[])
 
 	//shared_memory_object::remove(shm_region_name.c_str());
 
-   //Create shared memory
-   managed_shared_memory segment(create_only,shm_region_name.c_str(), shm_region_size_bytes);// shm_region_size);
+	
+	///////
+	///////
+	///////
+
+	if (vm["mode"].as<std::string>().compare("mmap") == 0)
+	{
+		//	Remove the file mapping
+		// file_mapping::remove(vm["memory-mapped-filename"].as<std::string>().c_str());
+
+		//	Create a file buffer
+		std::filebuf fbuf;
+
+		try {
+			fbuf.open(mmaped_filename.c_str()
+				, std::ios_base::in | std::ios_base::out | std::ios_base::trunc | std::ios_base::binary);
+		}
+		catch (const interprocess_exception& e)
+		{
+			std::cout << "An exception occurred while trying to open \""
+				<< mmaped_filename << "\" for the filebuf. The exception is: "
+				<< e.what() << std::endl;
+		}
+		catch (...)
+		{
+			std::cout << "An unknown/unexpected exception occurred while trying to open \""
+				<< mmaped_filename << "\" for the filebuf." << std::endl;
+		}
+
+
+
+		//	Set the filebuf size
+		//	seekoff sets a new position for internal position points...
+		
+		try {
+			fbuf.pubseekoff(shm_region_size_bytes - 1, std::ios_base::beg);
+		}
+		catch (const interprocess_exception& e)
+		{
+			std::cout << "An exception occurred while trying to pubseekoff the filebuffer for \""
+				<< mmaped_filename << "\". The exception is: "
+				<< e.what() << std::endl;
+		}
+		catch (...)
+		{
+			std::cout << "An unknown/unexpected exception occurred while trying to pubseekoff the filebuffer for \""
+				<< mmaped_filename << "\"." << std::endl;
+		}
+
+		try {
+			fbuf.sputc(0);	//	Store character at current put position and increase put pointer
+		}
+		catch (const interprocess_exception& e)
+		{
+			std::cout << "An exception occurred while trying to sputc the filebuffer for \""
+				<< mmaped_filename << "\". The exception is: "
+				<< e.what() << std::endl;
+		}
+		catch (...)
+		{
+			std::cout << "An unknown/unexpected exception occurred while trying to sputc the filebuffer for \"."
+				<< mmaped_filename << "\"" << std::endl;
+		}
+
+
+
+
+		//	Create the file mapping
+		std::shared_ptr<file_mapping> m_file;
+		try{
+			//file_mapping m_file(mmaped_filename.c_str(), read_write);
+			m_file.reset(new file_mapping(mmaped_filename.c_str(), read_write));
+		}
+		catch (const interprocess_exception& e)
+		{
+			std::cout << "An exception occurred while trying to create the file mapping for \"" << mmaped_filename << "\". The exception is: "
+			<< e.what() << std::endl;
+		}
+		catch (...)
+		{
+			std::cout << "An unknown/unexpected exception occurred while trying to create the file mapping for \"" << mmaped_filename << "\"." << std::endl;
+		}
+
+
+		//	Map the whole file with read-write permissions in this process
+		std::shared_ptr<mapped_region> region;
+		try{
+			region.reset(new mapped_region(*m_file, read_write));
+			//mapped_region region(*m_file, read_write);
+		}
+		catch (const interprocess_exception& e)
+		{
+			std::cout << "An exception occurred while trying to create the mmapped region for \"" << mmaped_filename << "\". The exception is: "
+			<< e.what() << std::endl;
+		}
+		catch (...)
+		{
+			std::cout << "An unknown/unexpected exception occurred while trying to create the mmapped region for \"" << mmaped_filename << "\"." << std::endl;
+		}
+
+
+		//	Get the address of the mapped region
+		void*		addr	= region->get_address();
+		std::size_t size	= region->get_size();
+
+		std::memset(addr, 1, size);
+	}
+	
+	///////
+	///////
+	///////
+
+
+
+	//	Create shared memory region
+	std::shared_ptr<managed_shared_memory> segment;
+	
+	
+	//std::shared_ptr<managed_mapped_file> segment;
+	
+	try {
+
+
+
+   		//managed_shared_memory
+		segment.reset(new managed_shared_memory(create_only,shm_region_name.c_str(), shm_region_size_bytes)
+);
+		//segment.reset(new managed_mapped_file(create_only, mmaped_filename.c_str()));
+	}
+	catch (interprocess_exception& e)
+	{
+		std::cout << "Did start the daemon, the exception is: " << e.what() << std::endl; std::exit(1);
+	}
+	catch (...)
+	{
+		std::cout << "An unknown/unexpected exception occurred. The daemon did not start up. Probably."
+					<< std::endl;
+		std::exit(1);
+	}
+
+	std::cout << "Started the daemon." << std::endl;
+
 
    //An allocator convertible to any allocator<T, segment_manager_t> type
-   void_allocator alloc_inst (segment.get_segment_manager());
+   void_allocator alloc_inst (segment->get_segment_manager());
 
+
+
+
+	//	Construct the tag map in shared memory
+	shared_map_type* tagMap = segment->construct<shared_map_type>(
+											vm["tag-map-name"].as<std::string>().c_str())
+												(std::less<char_string>(), alloc_inst);
+
+	//	Construct the file map in shared memory
+	shared_map_type* fileMap = segment->construct<shared_map_type>(
+											vm["file-map-name"].as<std::string>().c_str())
+												(std::less<char_string>(), alloc_inst);
+
+
+	//	Alright, let's get all of the data structures squared away in shared-space...
+
+	
+	//	TagDef Array container
+	typedef TagDef<char_string> TagDefT;
+
+	typedef allocator<TagDefT, segment_manager_t> TagDefTAlloc;
+
+	typedef list<TagDefT, TagDefTAlloc> ListTagDefT;
+
+	shared_map_type* tagArray = segment->construct<ListTagDefT>("TagDefArray")(alloc_inst);
+
+	
+
+	//	RNode Array container
+	typedef allocator<RNode, segment_manager_t> RNodeAlloc;
+
+	typedef list<RNode, RNodeAlloc> ListRNodeT;
+
+	shared_map_type* rnodeArray = segment->construct<ListRNodeT>("RNodeArray")(alloc_inst);
+
+	
+	
+	//	TagVal Array container
+	typedef TagVal<char_string> TagValT;
+
+	typedef allocator<TagValT, segment_manager_t> TagValTAlloc
+
+	typedef list<TagValT, TagValTAlloc> ListTagValT;
+
+	shared_map_type* tagValArray = segment->construct<ListTagValT>("TagValArray")(alloc_inst);
+
+	
+
+	//	RNode Set container
+	typedef std::pair<offset_ptr<RNode>, offset_ptr<TagValT> > RNodeValPairT;
+
+	typedef std::pair<offset_ptr<TagDefT>, offset_ptr<TagValT> > TagDefValPairT;
+
+	
+	typedef allocator<RNodeValPairT, segment_manager_t> RNodeValPairTAlloc;
+	
+	typedef allocator<TagDefValPairT, segment_manager_t> TagDefValPairTAlloc;
+
+	typedef list<RNodeValPairT, RNodeValPairTAlloc> ListRNodeValPairT;
+	
+	typedef list<TagDefValPairT, TagDefValPairTAlloc> ListTagDefValPairT;
+	
+
+	
+
+
+
+	/*
    //Construct the shared memory map and fill it
    shared_map_type *mymap = segment.construct<shared_map_type>
       //(object name), (first ctor parameter, second ctor parameter)
          ("MyMap")(std::less<char_string>(), alloc_inst);
 
+
+
+	
    for(std::size_t i = 0; i < spv.size(); ++i){
       //Both key(string) and value(complex_data) need an allocator in their constructors
       auto spvL = spv.at(i).first;
@@ -289,5 +559,9 @@ int main (int argc, char* argv[])
 		//mymap[stringPairVec.at(i).first] = stringPairVec.at(i).second;
       mymap->insert(value);
    }
+   */
+
+	//delete segment;
+
    return 0;
 }

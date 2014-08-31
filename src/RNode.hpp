@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <string>
+#include <atomic>
 
 #ifdef RNODE_USE_BOOST_SERIALIZE
 	#include <boost/archive/text_oarchive.hpp>
@@ -43,19 +44,24 @@ class RNode {
 
   public:
 	
-	typedef std::size_t UuidT;
+//	typedef std::size_t UuidT;
 
-	UuidT uuid;
+	std::atomic_size_t reference_count;
+
+//	UuidT uuid;
+
 
 	RNode () = delete
 
-	RNode (std::size_t in_uuid) : uuid(in_uuid) {}
-
+	RNode (std::size_t in_uuid) : reference_count(1)
+				//, uuid(in_uuid)
+				{}
+/*
 	friend
 	std::ostream&
 	operator<< (std::ostream& os, const RNode& obj)
 	{
-		os << "RNode: {UUID=" << obj.uuid << "}";
+		//os << "RNode: {UUID=" << obj.uuid << "}";
 		return os;
 	}
 
@@ -65,6 +71,6 @@ class RNode {
 	{
 		return ( lhs.uuid < rhs.uuid );
 	}
-
+*/
 
 };

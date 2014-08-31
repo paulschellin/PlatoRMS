@@ -62,10 +62,37 @@
 					particular level are all of the same type, the entire set can
 					be processed in a predictable way.
 
+		[!] When a TagInstance is removed from a TagSet/FileSet, it would leave a
+				gap which would stay around until it gets filled -- by a tag of the
+				same sort -- which means that you may be leaving spots empty and
+				still requiring jumps to the next contiguous region.
+
+	
+	Keep in mind that reading is not all that is done with files. Files are
+	created (a pretty cheap process), files are deleted (
 
 
 
+	Estimated constraints we have to work with:
 
+		Rate of creation:
+			TagDefs < RNodes < TagVals (assuming that most tags aren't labels)
+
+		Rate of deletion:
+			TagDefs < RNodes < TagVals
+
+
+		Expected quantity:
+			TagDefs < RNodes < TagVals
+
+
+		Individual size (minimum):
+			TagVals < RNodes < TagDefs
+
+		Individual size (maximum):
+			RNodes < TagDefs < TagVals
+
+		
 
 
 

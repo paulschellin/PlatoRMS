@@ -13,8 +13,12 @@
 
 #include <iostream>
 
+#include <prototype_structs.hpp>
+
+
 using namespace boost::interprocess;
 
+/*
 //Typedefs of allocators and containers
 typedef managed_shared_memory::segment_manager                       segment_manager_t;
 typedef allocator<void, segment_manager_t>                           void_allocator;
@@ -24,7 +28,7 @@ typedef allocator<int_vector, segment_manager_t>                     int_vector_
 typedef vector<int_vector, int_vector_allocator>                     int_vector_vector;
 typedef allocator<char, segment_manager_t>                           char_allocator;
 typedef basic_string<char, std::char_traits<char>, char_allocator>   char_string;
-
+*/
 
 /*
 template <typename T>
@@ -37,14 +41,14 @@ operator<<(std::ostream& os, const std::pair<T, T>& inPair)
 	return os;
 }
 */
-
+/*
 //Definition of the map holding a string as key and complex_data as mapped type
 typedef std::pair<const char_string, char_string>                      map_value_type;
 typedef std::pair<char_string, char_string>                            movable_to_map_value_type;
 typedef allocator<map_value_type, segment_manager_t>                    map_value_type_allocator;
 typedef map< char_string, char_string
            , std::less<char_string>, map_value_type_allocator>          shared_map_type;
-
+*/
 
 int main ()
 {
@@ -55,6 +59,32 @@ int main ()
 
 	managed_shared_memory segment(open_only, "PlatoDaemonSharedMemory");
 
+
+
+	ListTagDefT* tagArray = segment.find<ListTagDefT>("TagDefArray").first;
+
+	ListRNodeT* rnodeArray = segment.find<ListRNodeT>("RNodeArray").first;
+
+	ListTagValT* tagValArray = segment.find<ListTagValT>("TagValArray").first;
+
+	ListRNodeValPairT* rnodeValPairArray = segment.find<ListRNodeValPairT>("RNodeValPairArray").first;
+	
+	ListTagDefValPairT* tagDefValPairArray= segment.find<ListTagDefValPairT>("TagDefValPairArray").first;
+
+
+
+
+/*
+	ListTagDefT* tagArray = segment->construct<ListTagDefT>("TagDefArray")(alloc_inst);
+
+	ListRNodeT* rnodeArray = segment->construct<ListRNodeT>("RNodeArray")(alloc_inst);
+
+	ListTagValT* tagValArray = segment->construct<ListTagValT>("TagValArray")(alloc_inst);
+
+	ListRNodeValPairT* rnodeValPairArray = segment->construct<ListRNodeValPairT>("RNodeValPairArray")(alloc_inst);
+	
+	ListTagDefValPairT* tagDefValPairArray= segment->construct<ListTagDefValPairT>("TagDefValPairArray")(alloc_inst);
+*/
 	//std::cout << "Shm region size is: " << segment.get_size() << std::endl;
 
 	/*
@@ -62,13 +92,14 @@ int main ()
 		.find_no_lock
 	 */
 
-	shared_map_type* mymap = segment.find<shared_map_type>("MyMap").first;
+	//shared_map_type* mymap = segment.find<shared_map_type>("MyMap").first;
 
 
 	
 	//std::copy( mymap->begin(), mymap->end(), std::ostream_iterator<ValueType>(std::cout, "\n"));
 
 	//for (auto kvPair : *mymap)
+	/*
 	for (auto iter = mymap->begin(); iter != mymap->end(); ++iter)
 	{
 		std::cout << "{ " << std::string(iter->first.begin(), iter->first.end())
@@ -78,7 +109,9 @@ int main ()
 	}
 
 	std::cout.flush();
+	*/
 
+	
 	return 0;
 }
 

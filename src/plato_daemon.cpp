@@ -568,6 +568,11 @@ int main (int argc, char* argv[])
 	std::cout << "Found tag: (next line)" << std::endl << *found_tag << std::endl;
 
 
+	std::cout << "Print all tags:" << std::endl;
+
+	std::copy(pdb.tags_begin(), pdb.tags_end(), std::ostream_iterator<TagDefT>(std::cout, "\n"));
+
+
 	//pdb.delete_tag (tag_we_want_to_delete);
 
 	

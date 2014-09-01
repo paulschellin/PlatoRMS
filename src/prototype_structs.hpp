@@ -61,6 +61,40 @@ char_string operator "" _sh(const char* str, size_t)
 */
 
 
+//	Advance a copy instead of the original iterator
+template <class InputIterator, class Distance>
+InputIterator
+advance_copy (const InputIterator& it, Distance n)
+{
+	auto result = it;
+	std::advance(result, n);
+	return result;
+}
+
+
+/*
+	This is a somewhat awkward function which is used when two
+	containers have indices which are linked. If you have an iterator
+	to the right element in container A, this function gives you the
+	iterator to the element associated with that in container B.
+  */
+template <class InputIterator1, class InputIterator2, class InputIterator3>
+InputIterator3
+get_equivalent_iterator	( InputIterator1 first1		//	beginning of first range
+						, InputIterator2 position1	//	position desired of first range
+						, InputIterator3 first2)			//	beginning of second range
+{
+	auto result = first2;
+	
+	auto dist = std::distance(first1, position1);
+	std::advance(result, dist);
+
+	//for (auto it = first1; first1 != position1; ++it)
+	//	std::next(result);
+
+	return result;
+}
+
 
 struct RNode {
 
@@ -174,9 +208,9 @@ struct TagVal {
 
 
 	//	Old pair typedefs (use offset_ptr)
-	typedef std::pair<offset_ptr<RNode>, offset_ptr<TagValT> > RNodeValOffsetPairT;
+//	typedef std::pair<offset_ptr<RNode>, offset_ptr<TagValT> > RNodeValOffsetPairT;
 
-	typedef std::pair<offset_ptr<TagDefT>, offset_ptr<TagValT> > TagDefValOffsetPairT;
+//	typedef std::pair<offset_ptr<TagDefT>, offset_ptr<TagValT> > TagDefValOffsetPairT;
 
 	
 	typedef allocator<RNodeValPairT, segment_manager_t> RNodeValPairTAlloc;
@@ -242,9 +276,13 @@ public:
 
 	ListTagValT*			allTagVals;
 
-	RNodeValPairTListList*	allTagDefTagValPairSetsForAnRNode;
+	//RNodeValPairTListList*	allTagDefTagValPairSetsForAnRNode;
+	//TagDefValPairTListList*	allTagDefTagValPairSetsForAnRNode;
+	TagDefValPairTListList*	td_tv_pair_sets_for_each_rn;
 
-	TagDefValPairTListList*	allRNodeTagValPairSetsForATagDef;
+	//TagDefValPairTListList*	allRNodeTagValPairSetsForATagDef;
+	//RNodeValPairTListList*	allRNodeTagValPairSetsForATagDef;
+	RNodeValPairTListList*	rn_rv_pair_sets_for_each_td;
 
 
 
@@ -258,8 +296,8 @@ public:
 		allTagDefs = segment.find<ListTagDefT>("TagDefArray").first;
 		allRNodes = segment.find<ListRNodeT>("RNodeArray").first;
 		allTagVals = segment.find<ListTagValT>("TagValArray").first;
-		allTagDefTagValPairSetsForAnRNode = segment.find<RNodeValPairTListList>("RNodeValPairArray").first;
-		allRNodeTagValPairSetsForATagDef = segment.find<TagDefValPairTListList>("TagDefValPairArray").first;
+		td_tv_pair_sets_for_each_rn = segment.find<TagDefValPairTListList>("RNodeValPairArray").first;
+		rn_rv_pair_sets_for_each_td = segment.find<RNodeValPairTListList>("TagDefValPairArray").first;
 	}
 
 	
@@ -269,8 +307,8 @@ public:
 		allTagDefs = segment.find_or_construct<ListTagDefT>("TagDefArray")(void_alloc);
 		allRNodes = segment.find_or_construct<ListRNodeT>("RNodeArray")(void_alloc);
 		allTagVals = segment.find_or_construct<ListTagValT>("TagValArray")(void_alloc);
-		allTagDefTagValPairSetsForAnRNode = segment.find_or_construct<RNodeValPairTListList>("RNodeValPairArray")(void_alloc);
-		allRNodeTagValPairSetsForATagDef = segment.find_or_construct<TagDefValPairTListList>("TagDefValPairArray")(void_alloc);
+		td_tv_pair_sets_for_each_rn = segment.find_or_construct<TagDefValPairTListList>("RNodeValPairArray")(void_alloc);
+		rn_rv_pair_sets_for_each_td = segment.find_or_construct<RNodeValPairTListList>("TagDefValPairArray")(void_alloc);
 	}
 
 
@@ -279,7 +317,7 @@ public:
 
 	}
 
-/*
+
 	
 	///////////////////////////////////////////////////////////////////////////
 	//					Iterator Helpers
@@ -289,31 +327,51 @@ public:
 	RNodeValPairTListList::iterator
 	get_rnode_set_for_tagdef (ListTagDefT::iterator tagdef)
 	{
-		return allRNodeTagValPairSetsForATagDef.begin() + std::distance(allTagDefs.begin(), tagdef);
+		//return allRNodeTagValPairSetsForATagDef->begin() + std::distance(allTagDefs->begin(), tagdef);
+		return get_equivalent_iterator(allTagDefs->begin(), tagdef, rn_rv_pair_sets_for_each_td->begin());
+
+		/*
+		auto result = rn_rv_pair_sets_for_each_td->begin();
+		//auto dist = std::distance(allTagDefs->begin(), tagdef);
+		//std::advance(result, dist);
+		
+		for (auto it = allTagDefs->begin(); it != tagdef; ++it)
+			std::next(result);
+		
+		return result;
+		*/
+
 	}
+
 
 	//	Given an iterator to an element in a list of rnodes, return the appropriate set of {tagdef,tagval} pairs
 	TagDefValPairTListList::iterator
 	get_tagdef_set_for_rnode (ListRNodeT::iterator rnode)
 	{
-		return allTagDefTagValPairSetsForAnRNode.begin() + std::distance(allRNodes.begin(), rnode);
+		//return allTagDefTagValPairSetsForAnRNode->begin() + std::distance(allRNodes->begin(), rnode);
+		return get_equivalent_iterator(allRNodes->begin(), rnode,
+					td_tv_pair_sets_for_each_rn->begin());
 	}
 
 	//	Inverse function of get_rnode_set_for_tagdef
 	ListTagDefT::iterator
-	get_tagdef_for_rnode_set (RNodeValPairTListList::iterator rnode_set)
+	get_tagdef_for_rnode_set (TagDefValPairTListList::iterator rnode_set)
 	{
-		return allTagDefs.begin() + std::distance(allTagDefTagValPairSetsForAnRNode.begin(), rnode_set);
+		//return allTagDefs->begin() + std::distance(allTagDefTagValPairSetsForAnRNode->begin(), rnode_set);
+		return get_equivalent_iterator(td_tv_pair_sets_for_each_rn->begin(), rnode_set
+						, allTagDefs->begin());
 	}
 
 	//	Inverse function of get_tagdef_set_for_rnode
 	ListRNodeT::iterator
-	get_rnode_for_tagdef_set (TagDefValPairTListList::iterator tagdef_set)
+	get_rnode_for_tagdef_set (RNodeValPairTListList::iterator tagdef_set)
 	{
-		return allRNodes.begin() + std::distance(allRNodeTagValPairSetsForATagDef.begin(), tagdef_set);
+		//return allRNodes->begin() + std::distance(allRNodeTagValPairSetsForATagDef->begin(), tagdef_set);
+		return get_equivalent_iterator(rn_rv_pair_sets_for_each_td->begin(), tagdef_set, allRNodes->begin());
 	}
 
-	
+
+/*	
 	TagDefValPairTListList::iterator
 	get_tagdef_pair_for_rnode_pair (RNodeValPairTListList::iterator rn_tv_pair)
 	{
@@ -361,9 +419,9 @@ public:
 		return rn_tv_pair;
 	}
 
-
+*/
   public:
-	*/
+	
 
 	template <typename StringInputT>
 	ListTagDefT::iterator
@@ -398,12 +456,18 @@ public:
 		return td;
 	}
 
-	/*
-	get_tags (void) const
+
+	ListTagDefT::iterator
+	tags_begin(void) const
 	{
-		
+		return allTagDefs->begin();
 	}
-	*/
+	
+	ListTagDefT::iterator
+	tags_end(void)
+	{
+		return allTagDefs->end();
+	}
 
 	/*
 	void
@@ -491,6 +555,32 @@ public:
 	{
 		return allRNodes->size();
 	}
+
+	ListRNodeT::iterator
+	get_rnode (std::size_t uuid)
+	{
+		auto rn = std::find_if (allRNodes->begin(), allRNodes->end(),
+			[&](RNode x){
+				return (x.uuid == uuid);
+			}
+			);
+		return rn;
+	}
+
+	ListRNodeT::iterator
+	rnodes_begin (void)
+	{
+		return allRNodes->begin();
+	}
+
+	ListRNodeT::iterator
+	rnodes_end (void)
+	{
+		return allRNodes->end();
+	}
+
+
+
 
 	/*
 

@@ -32,7 +32,7 @@ c_flags=-Wall -Wextra -ggdb
 
 ld_flags=-Wall -Wextra -ggdb
 
-include_dirs=-I. -I src/ -I easyloggingpp/src
+include_dirs=-I. -I src/ -I easyloggingpp/src -I tclap-1.2.1/include/
 
 boost_libs=-lboost_program_options -lboost_system -lboost_iostreams -lboost_filesystem -lboost_serialization
 

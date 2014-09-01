@@ -13,8 +13,12 @@
 
 #include <iostream>
 
+#include <cstdlib>	//	for std::exit()
+
+
 #include <prototype_structs.hpp>
 
+#include <tclap/CmdLine.h>
 
 using namespace boost::interprocess;
 
@@ -50,17 +54,45 @@ typedef map< char_string, char_string
            , std::less<char_string>, map_value_type_allocator>          shared_map_type;
 */
 
-int main ()
+
+
+
+int main (int argc, char* argv[])
 {
-	//namespace bi = boost::interprocess;
+	try {
 
-	//using namespace PlatoDaemon;
+	TCLAP::CmdLine cmd("Plato userspace utility", ' ', "0.01");
+
+	std::vector<std::string> cmdAllowed = {"list", "add", "remove", "create", "new", "delete", "duplicate", "merge", "help"};
+	TCLAP::ValuesConstraint<std::string> cmdAllowedVals (cmdAllowed);
+
+	TCLAP::UnlabeledValueArg<std::string> commandArg ("command", "Pass All the commands!", true, "help", &cmdAllowedVals, cmd );
+	
+
+	std::vector<std::string> thingsAllowed = {"tag", "tags", "file", "files", "rnode", "rnodes"};
+	TCLAP::ValuesConstraint<std::string> thingsAllowedVals (thingsAllowed);
+
+	//TCLAP::UnlabeledValueArg<std::string> typeOfThingArg ("type of thing", "Pass All the things!", false, "help", &thingsAllowedVals, cmd );
 
 
-	managed_shared_memory segment(open_only, "PlatoDaemonSharedMemory");
+	cmd.parse(argc, argv);
+
+	std::string cmdArg = commandArg.getValue();
+//	std::string typeArg = typeOfThingArg.getValue();
 
 
+	std::cout << cmdArg << std::endl;
+	//std::cout << typeArg << std::endl;
 
+	try {
+		managed_shared_memory segment(open_only, "PlatoDaemonSharedMemory");
+	} catch (const interprocess_exception& e) {
+		std::cerr << "An exception occurred while attempting to connect to the shared memory segment. The exception is: " << e.what() << std::endl;
+	} catch (...) {
+		std::cerr << "An unknown/unexpected exception occurred while attempting to connect to the shared memory segment." << std::endl;
+	}
+
+	/*
 	ListTagDefT* tagArray = segment.find<ListTagDefT>("TagDefArray").first;
 
 	ListRNodeT* rnodeArray = segment.find<ListRNodeT>("RNodeArray").first;
@@ -70,21 +102,10 @@ int main ()
 	ListRNodeValPairT* rnodeValPairArray = segment.find<ListRNodeValPairT>("RNodeValPairArray").first;
 	
 	ListTagDefValPairT* tagDefValPairArray= segment.find<ListTagDefValPairT>("TagDefValPairArray").first;
-
-
-
-
-/*
-	ListTagDefT* tagArray = segment->construct<ListTagDefT>("TagDefArray")(alloc_inst);
-
-	ListRNodeT* rnodeArray = segment->construct<ListRNodeT>("RNodeArray")(alloc_inst);
-
-	ListTagValT* tagValArray = segment->construct<ListTagValT>("TagValArray")(alloc_inst);
-
-	ListRNodeValPairT* rnodeValPairArray = segment->construct<ListRNodeValPairT>("RNodeValPairArray")(alloc_inst);
-	
-	ListTagDefValPairT* tagDefValPairArray= segment->construct<ListTagDefValPairT>("TagDefValPairArray")(alloc_inst);
 */
+
+
+
 	//std::cout << "Shm region size is: " << segment.get_size() << std::endl;
 
 	/*
@@ -111,7 +132,10 @@ int main ()
 	std::cout.flush();
 	*/
 
-	
+	} catch (TCLAP::ArgException &e)	// catch all the exceptions!
+	{
+		std::cout << "error: " << e.error() << " for arg " << e.argId() << std::endl;
+	}
 	return 0;
 }
 

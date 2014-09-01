@@ -80,8 +80,10 @@ namespace po = boost::program_options;
 
 #include <prototype_structs.hpp>
 
+
 using namespace boost::interprocess;
 
+/*
 //Typedefs of allocators and containers
 typedef managed_shared_memory::segment_manager                       segment_manager_t;
 typedef allocator<void, segment_manager_t>                           void_allocator;
@@ -99,7 +101,7 @@ typedef std::pair<char_string, char_string>                            movable_t
 typedef allocator<map_value_type, segment_manager_t>                    map_value_type_allocator;
 typedef map< char_string, char_string
            , std::less<char_string>, map_value_type_allocator>          shared_map_type;
-
+*/
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -468,7 +470,7 @@ int main (int argc, char* argv[])
 
 
 
-
+	/*
 	//	Construct the tag map in shared memory
 	shared_map_type* tagMap = segment->construct<shared_map_type>(
 											vm["tag-map-name"].as<std::string>().c_str())
@@ -478,11 +480,11 @@ int main (int argc, char* argv[])
 	shared_map_type* fileMap = segment->construct<shared_map_type>(
 											vm["file-map-name"].as<std::string>().c_str())
 												(std::less<char_string>(), alloc_inst);
-
+	*/
 
 	//	Alright, let's get all of the data structures squared away in shared-space...
 
-	
+/*	
 	//	TagDef Array container
 	typedef TagDef<char_string> TagDefT;
 
@@ -531,7 +533,45 @@ int main (int argc, char* argv[])
 
 	ListRNodeValPairT* rnodeValPairArray = segment->construct<ListRNodeValPairT>("RNodeValPairArray")(alloc_inst);
 	ListTagDefValPairT* tagDefValPairArray= segment->construct<ListTagDefValPairT>("TagDefValPairArray")(alloc_inst);
+*/
 
+	PlatoDB pdb (*segment, alloc_inst);
+
+	//using namespace std::string_literals;
+	//using namespace std::literals::string_literals;
+	auto filename_tag = pdb.create_tag("filename"_s, "string"_s, "the name of the file"_s);
+
+	auto fs_tag = pdb.create_tag("filesystem"_s, "string"_s, "the filesystem of the actual file"_s);
+
+	auto path_tag = pdb.create_tag("path"_s, "string"_s, "the full path of the file"_s);
+
+	auto file_size_tag = pdb.create_tag("size"_s, "int"_s, "the size of the file in bytes"_s);
+
+	auto tag_we_want_to_delete = pdb.create_tag("test of deletion"_s, "string"_s, "this should be deleted by the beginning of the test"_s);
+
+	auto tag_we_want_to_delete_later = pdb.create_tag("test of deletion 2"_s, "string"_s, "this should be deleted by the end of the test"_s);
+
+
+	std::cout << "Size of tag list: " << pdb.count_tags() << std::endl;
+
+	auto new_file = pdb.create_rnode();
+
+	
+	std::cout << "Size of rnode list: " << pdb.count_rnodes() << std::endl;
+
+
+	auto found_tag = pdb.get_tag("size"_s);
+
+	std::cout << "Tried search on tag, was it correct? " << (file_size_tag == found_tag) << std::endl;
+
+
+	std::cout << "Found tag: (next line)" << std::endl << *found_tag << std::endl;
+
+
+	//pdb.delete_tag (tag_we_want_to_delete);
+
+	
+	
 
 
 	/*

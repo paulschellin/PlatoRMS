@@ -101,6 +101,14 @@ struct RNode {
 	std::size_t uuid;
 	//std::atomic_size_t reference_count;
 	RNode(std::size_t in_uuid = 0) : uuid(in_uuid) { }
+
+	friend
+	std::ostream&
+	operator<< (std::ostream& os, const RNode& rn)
+	{
+		os << rn.uuid;
+		return os;
+	}
 };
 
 
@@ -157,9 +165,18 @@ struct TagVal {
 
 	StringT value;
 
-	TagVal(StringT in_value, const void_allocator& void_alloc)
-		: value(in_value, void_alloc)
+	template <typename StringInputT>
+	TagVal(StringInputT in_value, const void_allocator& void_alloc)
+		: value(in_value.begin(), in_value.end(), void_alloc)
 	{ }
+
+	friend
+	std::ostream&
+	operator<< (std::ostream& os, const TagVal& tv)
+	{
+		os << tv.value;
+		return os;
+	}
 };
 
 
@@ -263,6 +280,27 @@ struct pair_second_equal_to {
 };
 
 
+std::ostream&
+operator<< (std::ostream& os, const RNodeValPairT& rn_tv_pair)
+{
+	os << "{rnode uuid:" << *rn_tv_pair.first
+		<< ",value:\"" << *rn_tv_pair.second
+		<< "\"}";
+
+	return os;
+}
+
+
+std::ostream&
+operator<< (std::ostream& os, const TagDefValPairT& td_tv_pair)
+{
+	os << "{tagdef:" << *td_tv_pair.first
+	<< ",value:\"" << *td_tv_pair.second
+	<< "\"}";
+
+	return os;
+}
+
 
 //template <typename T>
 class PlatoDB {
@@ -318,6 +356,18 @@ public:
 	}
 
 
+	void
+	print_basic_diagnostics (std::ostream& os)
+	{
+		os << "! Basic Diagnostic Information About PlatoDB Object:" << std::endl;
+		os << "!\tSize of allTagDefs:\t" << allTagDefs->size() << std::endl;
+		os << "!\tSize of allRNodes:\t" << allRNodes->size() << std::endl;
+		os << "!\tSize of allTagVals:\t" << allTagVals->size() << std::endl;
+		os << "!\tSize of td_tv_pair_sets_for_each_rn:\t" << td_tv_pair_sets_for_each_rn->size() << std::endl;
+		os << "!\tSize of rn_rv_pair_sets_for_each_td:\t" << rn_rv_pair_sets_for_each_td->size() << std::endl;
+		os << std::endl;
+		return;
+	}
 	
 	///////////////////////////////////////////////////////////////////////////
 	//					Iterator Helpers
@@ -327,28 +377,13 @@ public:
 	RNodeValPairTListList::iterator
 	get_rnode_set_for_tagdef (ListTagDefT::iterator tagdef)
 	{
-		//return allRNodeTagValPairSetsForATagDef->begin() + std::distance(allTagDefs->begin(), tagdef);
 		return get_equivalent_iterator(allTagDefs->begin(), tagdef, rn_rv_pair_sets_for_each_td->begin());
-
-		/*
-		auto result = rn_rv_pair_sets_for_each_td->begin();
-		//auto dist = std::distance(allTagDefs->begin(), tagdef);
-		//std::advance(result, dist);
-		
-		for (auto it = allTagDefs->begin(); it != tagdef; ++it)
-			std::next(result);
-		
-		return result;
-		*/
-
 	}
-
 
 	//	Given an iterator to an element in a list of rnodes, return the appropriate set of {tagdef,tagval} pairs
 	TagDefValPairTListList::iterator
 	get_tagdef_set_for_rnode (ListRNodeT::iterator rnode)
 	{
-		//return allTagDefTagValPairSetsForAnRNode->begin() + std::distance(allRNodes->begin(), rnode);
 		return get_equivalent_iterator(allRNodes->begin(), rnode,
 					td_tv_pair_sets_for_each_rn->begin());
 	}
@@ -357,7 +392,6 @@ public:
 	ListTagDefT::iterator
 	get_tagdef_for_rnode_set (TagDefValPairTListList::iterator rnode_set)
 	{
-		//return allTagDefs->begin() + std::distance(allTagDefTagValPairSetsForAnRNode->begin(), rnode_set);
 		return get_equivalent_iterator(td_tv_pair_sets_for_each_rn->begin(), rnode_set
 						, allTagDefs->begin());
 	}
@@ -366,7 +400,6 @@ public:
 	ListRNodeT::iterator
 	get_rnode_for_tagdef_set (RNodeValPairTListList::iterator tagdef_set)
 	{
-		//return allRNodes->begin() + std::distance(allRNodeTagValPairSetsForATagDef->begin(), tagdef_set);
 		return get_equivalent_iterator(rn_rv_pair_sets_for_each_td->begin(), tagdef_set, allRNodes->begin());
 	}
 
@@ -433,8 +466,10 @@ public:
 		//return allTagDefs->
 	
 		allTagDefs->emplace_front(name, type, description, void_alloc);
+		rn_rv_pair_sets_for_each_td->push_front(ListRNodeValPairT(void_alloc));
 		return allTagDefs->begin();
 	}
+	
 
 	
 	std::size_t
@@ -547,6 +582,7 @@ public:
 	{
 		//return allRNodes->emplace_back();
 		allRNodes->emplace_front();
+		td_tv_pair_sets_for_each_rn->push_front(ListTagDefValPairT(void_alloc));
 		return allRNodes->begin();
 	}
 
@@ -621,25 +657,43 @@ public:
 	}
 
 
+*/
 
-
+	template <typename StringInputT>
 	ListTagValT::iterator
-	add_tag_to_rnode (ListTagDefT::iterator tagdef, ListRNodeT::iterator rnode, StringT value)
+	add_tag_to_rnode (ListTagDefT::iterator tagdef, ListRNodeT::iterator rnode, StringInputT value)
 	{
-		auto tagval = allTagVals->emplace_back(tagdef, value);
+		allTagVals->emplace_front(value, void_alloc);
+		auto tagval = allTagVals->begin();
 
 
 		auto rnode_set = get_rnode_set_for_tagdef (tagdef);
 
 		auto tagdef_set = get_tagdef_set_for_rnode (rnode);
 
-		rnode_set->emplace_back(std::make_pair(rnode, tagval));
+		rnode_set->emplace_front(std::make_pair(rnode, tagval));
 
-		tagdef_set->emplace_back(std::make_pair(tagdef, tagval));
+		tagdef_set->emplace_front(std::make_pair(tagdef, tagval));
 
 		return tagval;
 	}
 
+
+	ListTagDefValPairT::iterator
+	rnode_tag_set_begin(ListRNodeT::iterator rn)
+	{
+		return get_tagdef_set_for_rnode(rn)->begin();
+	}
+
+	ListTagDefValPairT::iterator
+	rnode_tag_set_end(ListRNodeT::iterator rn)
+	{
+		return get_tagdef_set_for_rnode(rn)->end();
+	}
+
+
+
+/*
 
 	void
 	remove_tag_from_rnode (

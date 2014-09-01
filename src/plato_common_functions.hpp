@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <string>
 
 #include <prototype_structs.hpp>
@@ -170,3 +171,15 @@
 
  */
 
+void
+print_basic_shm_diagnostics (std::ostream& os, managed_shared_memory& segment)
+{
+	os << std::endl;
+	os << "! Basic Shared Memory Diagnostic Information:" << std::endl;
+	os << "!\tSize of the memory segment: " << segment.get_size() << std::endl;
+	os << "!\tFree bytes in the memory segment: " << segment.get_free_memory() << std::endl;
+	os << "!\tNumber of named objects in the memory segment: " << segment.get_num_named_objects() << std::endl;
+	os << "!\tNumber of unique objects in the memory segment: " << segment.get_num_unique_objects() << std::endl;
+	os << std::endl;
+	return;
+}

@@ -28,9 +28,9 @@ MAKEFILE=makefile
 
 std_lib_flags=-std=c++11
 
-c_flags=-Wall -Wextra -ggdb
+c_flags=-Wall -Wextra -g -ggdb
 
-ld_flags=-Wall -Wextra -ggdb
+ld_flags=-Wall -Wextra -g -ggdb
 
 include_dirs=-I. -I src/ -I easyloggingpp/src -I tclap-1.2.1/include/
 

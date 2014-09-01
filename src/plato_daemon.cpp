@@ -79,6 +79,7 @@ namespace po = boost::program_options;
 //////////////////////////////////////////////////////////////////////////////
 
 #include <prototype_structs.hpp>
+#include <plato_common_functions.hpp>
 
 
 using namespace boost::interprocess;
@@ -468,6 +469,8 @@ int main (int argc, char* argv[])
    //An allocator convertible to any allocator<T, segment_manager_t> type
    void_allocator alloc_inst (segment->get_segment_manager());
 
+	
+	print_basic_shm_diagnostics(std::cout, *segment);
 
 
 	/*
@@ -537,6 +540,8 @@ int main (int argc, char* argv[])
 
 	PlatoDB pdb (*segment, alloc_inst);
 
+//	print_basic_shm_diagnostics(std::cout, *segment);
+	
 	//using namespace std::string_literals;
 	//using namespace std::literals::string_literals;
 	auto filename_tag = pdb.create_tag("filename"_s, "string"_s, "the name of the file"_s);
@@ -552,10 +557,15 @@ int main (int argc, char* argv[])
 	auto tag_we_want_to_delete_later = pdb.create_tag("test of deletion 2"_s, "string"_s, "this should be deleted by the end of the test"_s);
 
 
+
+//	print_basic_shm_diagnostics(std::cout, *segment);
+
 	std::cout << "Size of tag list: " << pdb.count_tags() << std::endl;
 
 	auto new_file = pdb.create_rnode();
 
+	
+//	print_basic_shm_diagnostics(std::cout, *segment);
 	
 	std::cout << "Size of rnode list: " << pdb.count_rnodes() << std::endl;
 
@@ -572,7 +582,38 @@ int main (int argc, char* argv[])
 
 	std::copy(pdb.tags_begin(), pdb.tags_end(), std::ostream_iterator<TagDefT>(std::cout, "\n"));
 
+	pdb.print_basic_diagnostics(std::cout);
 
+	pdb.add_tag_to_rnode (filename_tag, new_file, "test.txt"_s);
+	pdb.add_tag_to_rnode (fs_tag, new_file, "ext4 \"/\""_s);
+	pdb.add_tag_to_rnode (path_tag, new_file, "/home/paulschellin/"_s);
+	pdb.add_tag_to_rnode (file_size_tag, new_file, "4096"_s);
+
+	
+	print_basic_shm_diagnostics(std::cout, *segment);
+	//auto ts_begin = pdb.rnode_tag_set_begin(new_file);
+	//auto ts_end = pdb.rnode_tag_set_end(new_file);
+
+	pdb.print_basic_diagnostics(std::cout);
+
+	std::cout << "Print all tag pairs for the file:" << std::endl;
+	std::copy(pdb.rnode_tag_set_begin(new_file), pdb.rnode_tag_set_end(new_file)
+			, std::ostream_iterator<TagDefValPairT>(std::cout, "\n"));
+	
+
+
+
+
+
+	//std::cout.flush();
+/*
+	for (auto it = ts_begin; it != ts_end; ++it)
+	{
+		std::cout << *it << std::endl;
+		
+		std::cout.flush();
+	}
+*/
 	//pdb.delete_tag (tag_we_want_to_delete);
 
 	

@@ -556,7 +556,11 @@ int main (int argc, char* argv[])
 
 	auto tag_we_want_to_delete_later = pdb.create_tag("test of deletion 2"_s, "string"_s, "this should be deleted by the end of the test"_s);
 
+	pdb.print_basic_diagnostics(std::cout);
 
+//	pdb.delete_tag(tag_we_want_to_delete);
+
+	pdb.print_basic_diagnostics(std::cout);
 
 //	print_basic_shm_diagnostics(std::cout, *segment);
 
@@ -588,6 +592,7 @@ int main (int argc, char* argv[])
 	pdb.add_tag_to_rnode (fs_tag, new_file, "ext4 \"/\""_s);
 	pdb.add_tag_to_rnode (path_tag, new_file, "/home/paulschellin/"_s);
 	pdb.add_tag_to_rnode (file_size_tag, new_file, "4096"_s);
+	pdb.add_tag_to_rnode (tag_we_want_to_delete_later, new_file, "this should be deleted by the end!"_s);
 
 	
 	print_basic_shm_diagnostics(std::cout, *segment);
@@ -602,7 +607,13 @@ int main (int argc, char* argv[])
 	
 
 
+	pdb.delete_tag(tag_we_want_to_delete_later);
 
+	pdb.print_basic_diagnostics(std::cout);
+
+	std::cout << "Print all tag pairs for the file:" << std::endl;
+	std::copy(pdb.rnode_tag_set_begin(new_file), pdb.rnode_tag_set_end(new_file)
+			, std::ostream_iterator<TagDefValPairT>(std::cout, "\n"));
 
 
 	//std::cout.flush();
@@ -614,9 +625,10 @@ int main (int argc, char* argv[])
 		std::cout.flush();
 	}
 */
-	//pdb.delete_tag (tag_we_want_to_delete);
+	pdb.delete_tag (tag_we_want_to_delete);
 
 	
+	pdb.print_basic_diagnostics(std::cout);
 	
 
 

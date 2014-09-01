@@ -251,33 +251,53 @@ typedef allocator<ListTagDefValPairT, segment_manager_t> ListTagDefValPairTAlloc
 typedef list<ListTagDefValPairT, ListTagDefValPairTAlloc> TagDefValPairTListList;
 
 
-template <typename T1, typename T2>
+template <typename PairT>
 struct pair_first_equal_to {
-	T2 value;
+	typedef typename PairT::first_type CompT;
+	CompT value;
 
-	pair_first_equal_to (const T2& val)
+	pair_first_equal_to (const CompT& val)
 		: value(val)
 	{}
 	
-	bool operator() (const T1& x) const {return x.first == value;}
-	typedef T1 first_argument_type;
+	bool operator() (const PairT& x) const {return x.first == value;}
+	typedef PairT first_argument_type;
 	
 	typedef bool result_type;
 };
 
-template <typename T1, typename T2>
+/*
+template <typename PairT>
+pair_first_equal_to<PairT>
+make_pair_first_equal_to_fn(const & val)
+{
+	return pair_first_equal_to<PairT>(val);
+}
+*/
+
+template <typename PairT>
 struct pair_second_equal_to {
-	T2 value;
+	typedef typename PairT::second_type CompT;
+	CompT value;
 
-	pair_second_equal_to (const T2& val)
+	pair_second_equal_to (const CompT& val)
 		: value(val)
 	{}
 	
-	bool operator() (const T1& x) const {return x.second == value;}
-	typedef T1 first_argument_type;
+	bool operator() (const PairT& x) const {return x.second == value;}
+	typedef PairT first_argument_type;
 	
 	typedef bool result_type;
 };
+
+/*
+template <typename PairT>
+pair_second_equal_to<PairT>
+make_pair_second_equal_to_fn(const & val)
+{
+	return pair_second_equal_to<PairT>(val);
+}
+*/
 
 
 std::ostream&
@@ -320,7 +340,7 @@ public:
 
 	//TagDefValPairTListList*	allRNodeTagValPairSetsForATagDef;
 	//RNodeValPairTListList*	allRNodeTagValPairSetsForATagDef;
-	RNodeValPairTListList*	rn_rv_pair_sets_for_each_td;
+	RNodeValPairTListList*	rn_tv_pair_sets_for_each_td;
 
 
 
@@ -335,7 +355,7 @@ public:
 		allRNodes = segment.find<ListRNodeT>("RNodeArray").first;
 		allTagVals = segment.find<ListTagValT>("TagValArray").first;
 		td_tv_pair_sets_for_each_rn = segment.find<TagDefValPairTListList>("RNodeValPairArray").first;
-		rn_rv_pair_sets_for_each_td = segment.find<RNodeValPairTListList>("TagDefValPairArray").first;
+		rn_tv_pair_sets_for_each_td = segment.find<RNodeValPairTListList>("TagDefValPairArray").first;
 	}
 
 	
@@ -346,7 +366,7 @@ public:
 		allRNodes = segment.find_or_construct<ListRNodeT>("RNodeArray")(void_alloc);
 		allTagVals = segment.find_or_construct<ListTagValT>("TagValArray")(void_alloc);
 		td_tv_pair_sets_for_each_rn = segment.find_or_construct<TagDefValPairTListList>("RNodeValPairArray")(void_alloc);
-		rn_rv_pair_sets_for_each_td = segment.find_or_construct<RNodeValPairTListList>("TagDefValPairArray")(void_alloc);
+		rn_tv_pair_sets_for_each_td = segment.find_or_construct<RNodeValPairTListList>("TagDefValPairArray")(void_alloc);
 	}
 
 
@@ -364,7 +384,7 @@ public:
 		os << "!\tSize of allRNodes:\t" << allRNodes->size() << std::endl;
 		os << "!\tSize of allTagVals:\t" << allTagVals->size() << std::endl;
 		os << "!\tSize of td_tv_pair_sets_for_each_rn:\t" << td_tv_pair_sets_for_each_rn->size() << std::endl;
-		os << "!\tSize of rn_rv_pair_sets_for_each_td:\t" << rn_rv_pair_sets_for_each_td->size() << std::endl;
+		os << "!\tSize of rn_tv_pair_sets_for_each_td:\t" << rn_tv_pair_sets_for_each_td->size() << std::endl;
 		os << std::endl;
 		return;
 	}
@@ -377,7 +397,7 @@ public:
 	RNodeValPairTListList::iterator
 	get_rnode_set_for_tagdef (ListTagDefT::iterator tagdef)
 	{
-		return get_equivalent_iterator(allTagDefs->begin(), tagdef, rn_rv_pair_sets_for_each_td->begin());
+		return get_equivalent_iterator(allTagDefs->begin(), tagdef, rn_tv_pair_sets_for_each_td->begin());
 	}
 
 	//	Given an iterator to an element in a list of rnodes, return the appropriate set of {tagdef,tagval} pairs
@@ -400,7 +420,7 @@ public:
 	ListRNodeT::iterator
 	get_rnode_for_tagdef_set (RNodeValPairTListList::iterator tagdef_set)
 	{
-		return get_equivalent_iterator(rn_rv_pair_sets_for_each_td->begin(), tagdef_set, allRNodes->begin());
+		return get_equivalent_iterator(rn_tv_pair_sets_for_each_td->begin(), tagdef_set, allRNodes->begin());
 	}
 
 
@@ -466,7 +486,7 @@ public:
 		//return allTagDefs->
 	
 		allTagDefs->emplace_front(name, type, description, void_alloc);
-		rn_rv_pair_sets_for_each_td->push_front(ListRNodeValPairT(void_alloc));
+		rn_tv_pair_sets_for_each_td->push_front(ListRNodeValPairT(void_alloc));
 		return allTagDefs->begin();
 	}
 	
@@ -504,7 +524,7 @@ public:
 		return allTagDefs->end();
 	}
 
-	/*
+	
 	void
 	delete_tag (ListTagDefT::iterator tagDef)
 	{
@@ -523,27 +543,24 @@ public:
 		{
 			auto val_instance = rnodeTagValPair.second;
 			
-			allTagVals.erase(val_instance);
+			allTagVals->erase(val_instance);
 
 			auto tagdef_set = get_tagdef_set_for_rnode (rnodeTagValPair.first);
 
 			//	Remove the element which has the same tagdef as what we're trying to remove
 			//	This could be done more efficiently without list::remove_if,
 			//	but we can change that later.
-			tagdef_set.remove_if (
-				[](auto val) {
-					return val.first == tagDef;
-				}
-			);
+			tagdef_set->remove_if ( pair_first_equal_to<TagDefValPairT>(tagDef) );
 		}
 
 
 		//	Erase the set of {rnode, tagval} pairs for the tagdef we're deleting
-		allRNodeTagValPairSetsForATagDef.erase( taggedFiles );
-
+		rn_tv_pair_sets_for_each_td->erase( taggedFiles );
 		//	Finally, erase the tagdef
-		allTagDefs.erase(tagDef);
+		allTagDefs->erase(tagDef);
 	}
+
+	/*
 
 	ListTagDefT::iterator
 	modify_tag_all (ListTagDefT::iterator tagdef, StringT name, StringT type, StringT description)
@@ -618,7 +635,7 @@ public:
 
 
 
-	/*
+	
 
 	void
 	delete_rnode (ListRNodeT::iterator rnode)
@@ -638,26 +655,29 @@ public:
 			//	
 			auto rnode_set = get_rnode_set_for_tagdef (td_pair.first);
 
-			rnode_set.remove_if(
-				[](auto val){
-					return val.first == rnode;
-				}
-			);
+			//rnode_set->remove_if(pair_first_equal_to(rnode));
+			
+			//typedef typename decltype(*rnode_set)::value_type pair_cmp_type;
+			//typedef typename decltype(declval(*rnode_set))::value_type pair_cmp_type;
+			
+			rnode_set->remove_if(pair_first_equal_to<RNodeValPairT>(rnode));
 
 			//rnode_set->remove_if(pair_first_equal_to(rnode));
+
+			
 
 		}
 
 
 		//	Erase the set of {tagdef, tagval} pairs for the rnode we're deleting
-		allTagDefTagValPairSetsForAnRNode.erase( td_pair_set );
+		td_tv_pair_sets_for_each_rn->erase( td_pair_set );
 
 		//	Finally, erase the rnode
-		allRNodes.erase(rnode);
+		allRNodes->erase(rnode);
 	}
 
 
-*/
+
 
 	template <typename StringInputT>
 	ListTagValT::iterator

@@ -18,7 +18,7 @@
 
 #include <prototype_structs.hpp>
 
-#include <tclap/CmdLine.h>
+//#include <tclap/CmdLine.h>
 
 using namespace boost::interprocess;
 
@@ -59,6 +59,8 @@ typedef map< char_string, char_string
 
 int main (int argc, char* argv[])
 {
+
+/*
 	try {
 
 	TCLAP::CmdLine cmd("Plato userspace utility", ' ', "0.01");
@@ -92,7 +94,7 @@ int main (int argc, char* argv[])
 		std::cerr << "An unknown/unexpected exception occurred while attempting to connect to the shared memory segment." << std::endl;
 	}
 
-	/*
+	
 	ListTagDefT* tagArray = segment.find<ListTagDefT>("TagDefArray").first;
 
 	ListRNodeT* rnodeArray = segment.find<ListRNodeT>("RNodeArray").first;
@@ -102,16 +104,16 @@ int main (int argc, char* argv[])
 	ListRNodeValPairT* rnodeValPairArray = segment.find<ListRNodeValPairT>("RNodeValPairArray").first;
 	
 	ListTagDefValPairT* tagDefValPairArray= segment.find<ListTagDefValPairT>("TagDefValPairArray").first;
-*/
+
 
 
 
 	//std::cout << "Shm region size is: " << segment.get_size() << std::endl;
 
-	/*
+	
 	 	.find
 		.find_no_lock
-	 */
+	 
 
 	//shared_map_type* mymap = segment.find<shared_map_type>("MyMap").first;
 
@@ -120,7 +122,7 @@ int main (int argc, char* argv[])
 	//std::copy( mymap->begin(), mymap->end(), std::ostream_iterator<ValueType>(std::cout, "\n"));
 
 	//for (auto kvPair : *mymap)
-	/*
+	
 	for (auto iter = mymap->begin(); iter != mymap->end(); ++iter)
 	{
 		std::cout << "{ " << std::string(iter->first.begin(), iter->first.end())
@@ -130,12 +132,32 @@ int main (int argc, char* argv[])
 	}
 
 	std::cout.flush();
-	*/
+	
 
 	} catch (TCLAP::ArgException &e)	// catch all the exceptions!
 	{
 		std::cout << "error: " << e.error() << " for arg " << e.argId() << std::endl;
 	}
+	*/
+
+	std::shared_ptr<managed_shared_memory> segment;
+
+	try {
+		segment.reset(new managed_shared_memory(open_only, "PlatoDaemonSharedMemory"));
+	} catch (const interprocess_exception& e) {
+		std::cerr << "An exception occurred while attempting to connect to the shared memory segment. The exception is: " << e.what() << std::endl;
+	} catch (...) {
+		std::cerr << "An unknown/unexpected exception occurred while attempting to connect to the shared memory segment." << std::endl;
+	}
+
+	
+	PlatoDB pdb (*segment);
+	//PlatoDB pdb (*segment, alloc_inst);
+
+
+	pdb.print_basic_diagnostics (std::cout);
+
+	
 	return 0;
 }
 

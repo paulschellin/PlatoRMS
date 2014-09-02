@@ -70,9 +70,9 @@ namespace po = boost::program_options;
 //					Try another logging framework
 //////////////////////////////////////////////////////////////////////////////
 
-//#include <easylogging++.h>
+#include <easylogging++.h>
 
-//_INITIALIZE_EASYLOGGINGPP
+_INITIALIZE_EASYLOGGINGPP
 
 //////////////////////////////////////////////////////////////////////////////
 //					-----
@@ -84,25 +84,6 @@ namespace po = boost::program_options;
 
 using namespace boost::interprocess;
 
-/*
-//Typedefs of allocators and containers
-typedef managed_shared_memory::segment_manager                       segment_manager_t;
-typedef allocator<void, segment_manager_t>                           void_allocator;
-typedef allocator<int, segment_manager_t>                            int_allocator;
-typedef vector<int, int_allocator>                                   int_vector;
-typedef allocator<int_vector, segment_manager_t>                     int_vector_allocator;
-typedef vector<int_vector, int_vector_allocator>                     int_vector_vector;
-typedef allocator<char, segment_manager_t>                           char_allocator;
-typedef basic_string<char, std::char_traits<char>, char_allocator>   char_string;
-
-
-//Definition of the map holding a string as key and char_string as mapped type
-typedef std::pair<const char_string, char_string>                      map_value_type;
-typedef std::pair<char_string, char_string>                            movable_to_map_value_type;
-typedef allocator<map_value_type, segment_manager_t>                    map_value_type_allocator;
-typedef map< char_string, char_string
-           , std::less<char_string>, map_value_type_allocator>          shared_map_type;
-*/
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -220,6 +201,14 @@ init_logging()
 };
 */
 
+void
+logging_configuration()
+{
+	el::Configurations conf("plato_easylogging++.conf");
+
+	el::Loggers::reconfigureLogger("default", conf);
+	//el::Loggers::reconfigureAllLoggers(conf);
+}
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -304,7 +293,10 @@ int main (int argc, char* argv[])
 
 	 */
 	
+	logging_configuration();
 	
+	LOG(INFO) << "Started " << argv[0] << ".";
+
 	command_handler(std::cout, vm);
 
 
@@ -463,11 +455,13 @@ int main (int argc, char* argv[])
 		std::exit(1);
 	}
 
-	std::cout << "Started the daemon." << std::endl;
+	LOG(INFO) << "Created the shared memory segment \"" << shm_region_name << "\".";
+
+
 
 
    //An allocator convertible to any allocator<T, segment_manager_t> type
-   void_allocator alloc_inst (segment->get_segment_manager());
+	void_allocator alloc_inst (segment->get_segment_manager());
 
 	
 	print_basic_shm_diagnostics(std::cout, *segment);
@@ -539,6 +533,10 @@ int main (int argc, char* argv[])
 */
 
 	PlatoDB pdb (*segment, alloc_inst);
+
+	LOG(INFO) << "Created PlatoDB object.";
+
+	LOG(INFO) << "Started the daemon.";
 
 //	print_basic_shm_diagnostics(std::cout, *segment);
 	
@@ -662,5 +660,6 @@ int main (int argc, char* argv[])
 
 	//delete segment;
 
-   return 0;
+	LOG(INFO) << "Plato daemon controller finishing. Daemon still running.";
+	return 0;
 }

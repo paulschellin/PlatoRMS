@@ -8,8 +8,11 @@
 #include <boost/interprocess/containers/string.hpp>
 
 #include <vector>
+#include <map>
 #include <string>
 #include <utility>
+#include <algorithm>
+#include <iterator>
 
 #include <iostream>
 
@@ -18,145 +21,302 @@
 
 #include <prototype_structs.hpp>
 
-//#include <tclap/CmdLine.h>
+#include <tclap/CmdLine.h>
+
+#include <easylogging++.h>
+_INITIALIZE_EASYLOGGINGPP
 
 using namespace boost::interprocess;
 
 /*
-//Typedefs of allocators and containers
-typedef managed_shared_memory::segment_manager                       segment_manager_t;
-typedef allocator<void, segment_manager_t>                           void_allocator;
-typedef allocator<int, segment_manager_t>                            int_allocator;
-typedef vector<int, int_allocator>                                   int_vector;
-typedef allocator<int_vector, segment_manager_t>                     int_vector_allocator;
-typedef vector<int_vector, int_vector_allocator>                     int_vector_vector;
-typedef allocator<char, segment_manager_t>                           char_allocator;
-typedef basic_string<char, std::char_traits<char>, char_allocator>   char_string;
-*/
+	Logging levels:
+	Global, Trace, Debug, Fatal, Error, Warning, Info, Verbose, Unknown
 
-/*
-template <typename T>
-std::ostream&
-operator<<(std::ostream& os, const std::pair<T, T>& inPair)
+ */
+
+struct command_struct {
+	std::string description;
+	//bool can_have_args;
+	//bool needs_args;
+	//bool has_multiple_args;
+	std::size_t number_of_args;	//zero indicates infinite?
+
+};
+
+void
+logging_configuration()
 {
+	el::Configurations conf("plato_easylogging++.conf");
 
-	os << "{ " << inPair.first << " : " << inPair.second << " }";
-
-	return os;
+	el::Loggers::reconfigureLogger("default", conf);
+	//el::Loggers::reconfigureAllLoggers(conf);
 }
-*/
+
 /*
-//Definition of the map holding a string as key and complex_data as mapped type
-typedef std::pair<const char_string, char_string>                      map_value_type;
-typedef std::pair<char_string, char_string>                            movable_to_map_value_type;
-typedef allocator<map_value_type, segment_manager_t>                    map_value_type_allocator;
-typedef map< char_string, char_string
-           , std::less<char_string>, map_value_type_allocator>          shared_map_type;
+std::map<std::string, command_struct> allowed_commandMap = {
+		{"help",		{"provides help", 1}}
+		{"create",		{"create an object", 1}}
+		{"new", 		{"create an object", 1}}
+		{"delete", 		{"delete an object", 1}}
+		{"list", 		{"list objects", 1}}
+		{"modify", 		{"modify an object", 1}}
+		{"merge", 		{"merge an object", 1}}
+		{"duplicate",	
+		{"add", 
+		{"remove" 
+		};
 */
 
 
+
+std::vector<std::string> allowed_commands = {
+		"help", 
+		"create",
+		"new", 
+		"delete", 
+		"list", 
+		"info",
+		"view",
+		"modify", 
+		"merge", 
+		"duplicate", 
+		"add", 
+		"remove" 
+		};
+
+//std::map<std::string, > allowed_cmd_objects = {
+std::vector<std::string> allowed_cmd_objects = {
+		"tag",
+		"tags",
+		"file",
+		"files",
+		"rnode",
+		"rnodes",
+		"scope",
+		"scopes"
+		};
+
+
+/*
+		list tags		lists all tags
+		list tag		lists 
+
+		list-tags
+		create-tag [3]
+		delete-tag [1]
+		view-tag   [1]
+		modify-tag [1] [3]
+
+		list-files
+		create-file	
+		delete-file
+		view-file
+		modify-file
+
+		
+
+ */
+
+void
+parse_cmd_line_arguments (int argc, char* argv[])
+{
+	if (argc > 2)
+	{
+		std::string cmdString (argv[1]);
+		std::string objString (argv[2]);
+
+		if ((cmdString == "list"_s) && (objString == "tags"))
+		{
+
+		}
+
+	}
+}
 
 
 int main (int argc, char* argv[])
 {
-
-/*
-	try {
-
+	
+	logging_configuration();
+	
+//  try{
+	/*
 	TCLAP::CmdLine cmd("Plato userspace utility", ' ', "0.01");
 
-	std::vector<std::string> cmdAllowed = {"list", "add", "remove", "create", "new", "delete", "duplicate", "merge", "help"};
-	TCLAP::ValuesConstraint<std::string> cmdAllowedVals (cmdAllowed);
+	TCLAP::ValuesConstraint<std::string> cmdAllowedVals (allowed_commands);
+	TCLAP::ValueArg<std::string> commandArg ("c", "command", "Tell the client what to do.", true, "help", &cmdAllowedVals, cmd);
+	//TCLAP::UnlabeledValueArg<std::string> commandArg ("command", "Tell the client what to do.", true, "help", &cmdAllowedVals, cmd);
 
-	TCLAP::UnlabeledValueArg<std::string> commandArg ("command", "Pass All the commands!", true, "help", &cmdAllowedVals, cmd );
-	
 
-	std::vector<std::string> thingsAllowed = {"tag", "tags", "file", "files", "rnode", "rnodes"};
-	TCLAP::ValuesConstraint<std::string> thingsAllowedVals (thingsAllowed);
+	TCLAP::ValuesConstraint<std::string> cmdAllowedObjs (allowed_cmd_objects);
 
-	//TCLAP::UnlabeledValueArg<std::string> typeOfThingArg ("type of thing", "Pass All the things!", false, "help", &thingsAllowedVals, cmd );
 
+	TCLAP::ValueArg<std::string> objectArg ("t", "object", "tells the client what to operate on", true, "", &cmdAllowedObjs, cmd);
+	//TCLAP::UnlabeledValueArg<std::string> objectArg ("what", "tells the client what to operate on", true, "", &cmdAllowedObjs, cmd);
+
+
+//	TCLAP::UnlabeledMultiArg<std::string> otherArgs ("other arguments", "like the names of the files or tags, etc.", false, "filenames, tag names, etc.", cmd);
+
+	cmd.setExceptionHandling(false);
 
 	cmd.parse(argc, argv);
 
-	std::string cmdArg = commandArg.getValue();
-//	std::string typeArg = typeOfThingArg.getValue();
+	auto cmdArg = commandArg.getValue();
+	auto objArg = objectArg.getValue();
+	//auto objArg = otherArgs.getValue().front();
+//	auto xtraArgs = otherArgs.getValue();
 
-
-	std::cout << cmdArg << std::endl;
-	//std::cout << typeArg << std::endl;
-
-	try {
-		managed_shared_memory segment(open_only, "PlatoDaemonSharedMemory");
-	} catch (const interprocess_exception& e) {
-		std::cerr << "An exception occurred while attempting to connect to the shared memory segment. The exception is: " << e.what() << std::endl;
-	} catch (...) {
-		std::cerr << "An unknown/unexpected exception occurred while attempting to connect to the shared memory segment." << std::endl;
-	}
-
-	
-	ListTagDefT* tagArray = segment.find<ListTagDefT>("TagDefArray").first;
-
-	ListRNodeT* rnodeArray = segment.find<ListRNodeT>("RNodeArray").first;
-
-	ListTagValT* tagValArray = segment.find<ListTagValT>("TagValArray").first;
-
-	ListRNodeValPairT* rnodeValPairArray = segment.find<ListRNodeValPairT>("RNodeValPairArray").first;
-	
-	ListTagDefValPairT* tagDefValPairArray= segment.find<ListTagDefValPairT>("TagDefValPairArray").first;
-
-
-
-
-	//std::cout << "Shm region size is: " << segment.get_size() << std::endl;
-
-	
-	 	.find
-		.find_no_lock
-	 
-
-	//shared_map_type* mymap = segment.find<shared_map_type>("MyMap").first;
-
-
-	
-	//std::copy( mymap->begin(), mymap->end(), std::ostream_iterator<ValueType>(std::cout, "\n"));
-
-	//for (auto kvPair : *mymap)
-	
-	for (auto iter = mymap->begin(); iter != mymap->end(); ++iter)
-	{
-		std::cout << "{ " << std::string(iter->first.begin(), iter->first.end())
-				<< " : " << std::string(iter->second.begin(), iter->second.end())
-				<< " }" << std::endl;
-
-	}
-
-	std::cout.flush();
-	
-
-	} catch (TCLAP::ArgException &e)	// catch all the exceptions!
-	{
-		std::cout << "error: " << e.error() << " for arg " << e.argId() << std::endl;
-	}
+	LOG(INFO) << "Started " << argv[0] << ". Command arg was \"" << cmdArg << "\" and object arg was \"" << objArg << "\".";
 	*/
 
-	std::shared_ptr<managed_shared_memory> segment;
+	LOG(INFO) << "Started " << argv[0] << ".";
 
-	try {
-		segment.reset(new managed_shared_memory(open_only, "PlatoDaemonSharedMemory"));
-	} catch (const interprocess_exception& e) {
-		std::cerr << "An exception occurred while attempting to connect to the shared memory segment. The exception is: " << e.what() << std::endl;
-	} catch (...) {
-		std::cerr << "An unknown/unexpected exception occurred while attempting to connect to the shared memory segment." << std::endl;
+	std::string cmdArg = "help";
+	std::string objArg = "";
+
+	std::vector<std::string> xtraArgs;
+
+
+	if (argc > 1) {
+		cmdArg = std::string(argv[1]);
+		if (argc > 2) {
+			objArg = std::string(argv[2]);
+		}
+		if (argc > 3) {
+			for (int i = 3; i < argc; ++i)
+				xtraArgs.push_back(argv[i]);
+		}
 	}
 
+
+	if (cmdArg == "help"_s)
+	{
+		//	Help doesn't do anything really, we'll work on it later.
+	}
+	else
+	{
+		std::shared_ptr<managed_shared_memory> segment;
+		std::string segment_name ("PlatoDaemonSharedMemory");
+
+		try {
+			segment.reset(new managed_shared_memory(open_only, segment_name.c_str()));
+		} catch (const interprocess_exception& e) {
+			LOG(FATAL) << "An exception occurred while attempting to connect to the shared memory segment. The exception is: " << e.what();
+			std::exit(1);
+		} catch (...) {
+			LOG(FATAL) << "An unknown/unexpected exception occurred while attempting to connect to the shared memory segment.";
+			std::exit(1);
+		}
+
+		LOG(INFO) << "Connected to shared memory segment \"" << segment_name << "\".";
 	
-	PlatoDB pdb (*segment);
-	//PlatoDB pdb (*segment, alloc_inst);
+		PlatoDB pdb (*segment);
+
+		LOG(INFO) << "Created PlatoDB object.";
+
+		//pdb.print_basic_diagnostics (std::cout);
+
+		
+		//	Go through the commands
 
 
-	pdb.print_basic_diagnostics (std::cout);
+		if (cmdArg == "list"_s)
+		{
+			if (objArg == "tag"_s || objArg == "tags"_s )
+			{
+				std::copy(pdb.tags_begin(), pdb.tags_end(), std::ostream_iterator<TagDefT>(std::cout, "\n"));
+			} else
+			if (objArg == "file"_s || objArg == "files"_s
+					|| objArg == "rnode"_s || objArg == "rnodes"_s)
+			{
+				std::copy(pdb.rnodes_begin(), pdb.rnodes_end(), std::ostream_iterator<RNode>(std::cout, "\n"));
+			} else
+			if (objArg == "scope"_s || objArg == "scopes"_s )
+			{
+				std::cout << "Hm... scopes don't appear to be implemented yet. Sorry!" << std::endl;
+			}
 
+		} else
+		if (cmdArg == "create"_s || cmdArg == "new"_s )
+		{
+			if (objArg == "tag"_s || objArg == "tags"_s )
+			{
+				if (xtraArgs.size() >= 3)
+				{
+					pdb.create_tag(xtraArgs.at(0), xtraArgs.at(1), xtraArgs.at(2));
+					LOG(INFO) << "Created new tag.";
+				} else
+				{
+					LOG(WARNING) << "Couldn't create new tag. Not enough arguments.";
+				}
+			} else
+			if (objArg == "file"_s || objArg == "files"_s
+					|| objArg == "rnode"_s || objArg == "rnodes"_s)
+			{
+				pdb.create_rnode();
+				LOG(WARNING) << "There isn't a good way to find this file/rnode once it's created!";
+			} else
+			if (objArg == "scope"_s || objArg == "scopes"_s )
+			{
+				LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
+			}
+
+
+		} else
+		if (cmdArg == "add"_s)
+		{
+			if (objArg == "tag"_s || objArg == "tags"_s )
+			{
+				if (xtraArgs.size() == 2)
+				{
+					auto td = pdb.get_tag(xtraArgs.at(0));
+					//auto rn = pdb.get_rnode(xtraArgs.at(1));
+					//pdb.add_tag_to_rnode(td, rn, ""_s);
+				} else
+				if (xtraArgs.size() == 3)
+				{
+					auto td = pdb.get_tag(xtraArgs.at(0));
+					//auto rn = pdb.get_rnode(xtraArgs.at(1));
+					//pdb.add_tag_to_rnode(td, rn, xtraArgs.at(2));
+				}
+			} else
+			if (objArg == "file"_s || objArg == "files"_s
+					|| objArg == "rnode"_s || objArg == "rnodes"_s)
+			{
+				LOG(WARNING) << "Sorry, this syntax just doesn't make any sense!";
+			} else
+			if (objArg == "scope"_s || objArg == "scopes"_s )
+			{
+				LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
+			}
+		} else
+		if (cmdArg == "remove"_s)
+		{
+			if (objArg == "tag"_s || objArg == "tags"_s )
+			{
+				if (xtraArgs.size() == 2)
+				{
+					auto td = pdb.get_tag(xtraArgs.at(0));
+					//auto rn = pdb.get_rnode(xtraArgs.at(1));
+					//pdb.remove_tag_from_rnode(td, rn);
+				} 
+			//	if (xtraArgs.size() >= 3)
+			//		pdb.create_tag(xtraArgs.at(0), xtraArgs.at(1), xtraArgs.at(2));
+			} else
+			if (objArg == "file"_s || objArg == "files"_s
+					|| objArg == "rnode"_s || objArg == "rnodes"_s)
+			{
+				LOG(WARNING) << "Sorry, this syntax just doesn't make any sense!";
+			} else
+			if (objArg == "scope"_s || objArg == "scopes"_s )
+			{
+				LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
+			}
+		}
+	}
+
+//  } catch (const TCLAP::ArgException& e)
+//  { LOG(FATAL) << "Failed to parse arguments. Error is: " << e.error() << " " << e.argId(); }
 	
 	return 0;
 }

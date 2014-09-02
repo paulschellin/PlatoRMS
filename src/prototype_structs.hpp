@@ -23,6 +23,18 @@
 #include <boost/interprocess/smart_ptr/deleter.hpp>
 
 
+//////////////////////////////////////////////////////////////////////////////
+//					Boost UUID Library Headers
+//////////////////////////////////////////////////////////////////////////////
+
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
+
+//////////////////////////////////////////////////////////////////////////////
+//					
+//////////////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <array>
@@ -96,11 +108,23 @@ get_equivalent_iterator	( InputIterator1 first1		//	beginning of first range
 }
 
 
-struct RNode {
+//	Before we turn on the UUIDs, we need to figure out if we want to change
+//	from size_t inside of RNode or if we want to reduce the size of UUIDs.
+//#define PLATO_USE_UUID 1
 
-	std::size_t uuid;
+//template <typename UuidT = std::size_t>
+struct RNode {
+	typedef std::size_t UuidT;
+	UuidT uuid;
+
+#ifndef PLATO_USE_UUID
 	//std::atomic_size_t reference_count;
-	RNode(std::size_t in_uuid = 0) : uuid(in_uuid) { }
+	RNode(UuidT in_uuid = 0) : uuid(in_uuid) { }
+#else
+	RNode(void) = delete;
+
+	RNode(UuidT in_uuid) : uuid(in_uuid) { }
+#endif
 
 	friend
 	std::ostream&
@@ -342,7 +366,9 @@ public:
 	//RNodeValPairTListList*	allRNodeTagValPairSetsForATagDef;
 	RNodeValPairTListList*	rn_tv_pair_sets_for_each_td;
 
-
+#ifdef PLATO_USE_UUID	
+	boost::uuids::random_generator* uuid_rg;
+#endif
 
 public:
 
@@ -356,6 +382,12 @@ public:
 		allTagVals = segment.find<ListTagValT>("TagValArray").first;
 		td_tv_pair_sets_for_each_rn = segment.find<TagDefValPairTListList>("RNodeValPairArray").first;
 		rn_tv_pair_sets_for_each_td = segment.find<RNodeValPairTListList>("TagDefValPairArray").first;
+
+#ifdef PLATO_USE_UUID	
+		uuid_rg = segment.find<boost::uuids::random_generator>("UuidRG").first;
+#endif
+
+		
 	}
 
 	
@@ -367,6 +399,11 @@ public:
 		allTagVals = segment.find_or_construct<ListTagValT>("TagValArray")(void_alloc);
 		td_tv_pair_sets_for_each_rn = segment.find_or_construct<TagDefValPairTListList>("RNodeValPairArray")(void_alloc);
 		rn_tv_pair_sets_for_each_td = segment.find_or_construct<RNodeValPairTListList>("TagDefValPairArray")(void_alloc);
+
+#ifdef PLATO_USE_UUID
+		uuid_rg = segment.find_or_construct<boost::uuids::random_generator>("UuidRG")();
+#endif
+
 	}
 
 
@@ -597,8 +634,13 @@ public:
 	ListRNodeT::iterator
 	create_rnode ()
 	{
-		//return allRNodes->emplace_back();
+
+#ifndef PLATO_USE_UUID
 		allRNodes->emplace_front();
+#else
+		allRNodes->emplace_front((*uuid_rg)());
+#endif
+
 		td_tv_pair_sets_for_each_rn->push_front(ListTagDefValPairT(void_alloc));
 		return allRNodes->begin();
 	}
@@ -713,8 +755,6 @@ public:
 
 
 
-/*
-
 	void
 	remove_tag_from_rnode (
 							ListTagDefT::iterator	tagdef
@@ -732,7 +772,7 @@ public:
 										//, [](auto this_td_val_pair){
 										//		return this_td_val_pair.first == tagdef;
 										//	}
-										, pair_first_equal_to(tagdef)
+										, pair_first_equal_to<TagDefValPairT>(tagdef)
 										);
 
 		//	Remove the tagval instance from allTagVals
@@ -751,7 +791,7 @@ public:
 										//, [](auto this_rn_tv_pair){
 										//		return this_rn_tv_pair.first == rnode;
 										//	}
-										, pair_first_equal_to(rnode)
+										, pair_first_equal_to<RNodeValPairT>(rnode)
 										);
 
 		//	Now remove the {rnode, tagval} pair
@@ -761,6 +801,7 @@ public:
 		//rn_tv_pair_set->remove_if(pair_first_equal_to(rnode));
 	}
 
+/*
 
 	void
 	modify_rnode_tag (ListTagDefT::iterator tagdef, ListRNodeT::iterator rnode, StringT value)

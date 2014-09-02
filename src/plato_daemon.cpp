@@ -234,7 +234,6 @@ int command_handler (std::ostream& os, po::variables_map& vm)
 		os << "Temporarily stopped the daemon." << std::endl;
 	} else
 	if (vm.count("status")) {
-
 		std::exit(0);
 	}
 

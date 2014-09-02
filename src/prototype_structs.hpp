@@ -114,23 +114,23 @@ get_equivalent_iterator	( InputIterator1 first1		//	beginning of first range
 
 //template <typename UuidT = std::size_t>
 struct RNode {
+#ifdef PLATO_USE_UUID
+	typedef boost::uuids::uuid UuidT;
+#else
 	typedef std::size_t UuidT;
+#endif
+
 	UuidT uuid;
 
-#ifndef PLATO_USE_UUID
-	//std::atomic_size_t reference_count;
-	RNode(UuidT in_uuid = 0) : uuid(in_uuid) { }
-#else
 	RNode(void) = delete;
 
 	RNode(UuidT in_uuid) : uuid(in_uuid) { }
-#endif
 
 	friend
 	std::ostream&
 	operator<< (std::ostream& os, const RNode& rn)
 	{
-		os << rn.uuid;
+		os << "{uuid:" << rn.uuid << "}";
 		return os;
 	}
 };
@@ -369,6 +369,8 @@ public:
 #ifdef PLATO_USE_UUID	
 	boost::uuids::random_generator* uuid_rg;
 #endif
+	
+	std::size_t* last_uuid;
 
 public:
 
@@ -387,7 +389,7 @@ public:
 		uuid_rg = segment.find<boost::uuids::random_generator>("UuidRG").first;
 #endif
 
-		
+		last_uuid = segment.find<std::size_t>("LastUuid").first;
 	}
 
 	
@@ -404,6 +406,7 @@ public:
 		uuid_rg = segment.find_or_construct<boost::uuids::random_generator>("UuidRG")();
 #endif
 
+		last_uuid = segment.find_or_construct<std::size_t>("LastUuid")();
 	}
 
 
@@ -636,7 +639,9 @@ public:
 	{
 
 #ifndef PLATO_USE_UUID
-		allRNodes->emplace_front();
+		++(*last_uuid);
+		allRNodes->emplace_front(*last_uuid);
+		//allRNodes->emplace_front(0);
 #else
 		allRNodes->emplace_front((*uuid_rg)());
 #endif
@@ -652,7 +657,7 @@ public:
 	}
 
 	ListRNodeT::iterator
-	get_rnode (std::size_t uuid)
+	get_rnode (RNode::UuidT uuid)
 	{
 		auto rn = std::find_if (allRNodes->begin(), allRNodes->end(),
 			[&](RNode x){
@@ -755,6 +760,21 @@ public:
 
 
 
+	ListRNodeValPairT::iterator
+	tagdef_rnode_set_begin(ListTagDefT::iterator td)
+	{
+		return get_rnode_set_for_tagdef(td)->begin();
+	}
+
+	ListRNodeValPairT::iterator
+	tagdef_rnode_set_end(ListTagDefT::iterator td)
+	{
+		return get_rnode_set_for_tagdef(td)->end();
+	}
+
+
+
+
 	void
 	remove_tag_from_rnode (
 							ListTagDefT::iterator	tagdef
@@ -801,19 +821,21 @@ public:
 		//rn_tv_pair_set->remove_if(pair_first_equal_to(rnode));
 	}
 
-/*
 
+	template <typename StringInputT>
 	void
-	modify_rnode_tag (ListTagDefT::iterator tagdef, ListRNodeT::iterator rnode, StringT value)
+	modify_rnode_tag (ListTagDefT::iterator tagdef, ListRNodeT::iterator rnode, StringInputT value)
 	{
 		//	First find the tagdef's rnode set
 		auto rnode_set = get_rnode_set_for_tagdef(tagdef);
 
 		//	Now find the {rnode, tagval} pair which matches the rnode
-		auto rn_tv_pair = std::find_if(rnode_set->begin(), rnode_set->end(), pair_first_equal_to(rnode));
+		auto rn_tv_pair = std::find_if(rnode_set->begin(), rnode_set->end()
+				, pair_first_equal_to<RNodeValPairT>(rnode));
 
 		//	Now update the value at the tagvalue position
-		rn_tv_pair->second->value = value;
+		char_string new_value (value.begin(), value.end(), void_alloc);
+		rn_tv_pair->second->value = new_value;
 
 		//	Or by the rnode's tagdef set
 		//auto tagdef_set = get_tagdef_set_for_rnode(rnode);
@@ -825,7 +847,7 @@ public:
 	
 
 
-*/
+
 
 
 

@@ -136,7 +136,6 @@ parse_cmd_line_arguments (int argc, char* argv[])
 
 int main (int argc, char* argv[])
 {
-	
 	logging_configuration();
 	
 //  try{
@@ -222,12 +221,27 @@ int main (int argc, char* argv[])
 
 		if (cmdArg == "list"_s)
 		{
-			if (objArg == "tag"_s || objArg == "tags"_s )
+			if (objArg == "tag"_s)
+			{
+				auto td = pdb.get_tag(xtraArgs.at(0));
+
+				std::cout << "Print all file/rnode pairs for the tag:" << std::endl;
+				std::copy(pdb.tagdef_rnode_set_begin(td), pdb.tagdef_rnode_set_end(td)
+						, std::ostream_iterator<RNodeValPairT>(std::cout, "\n"));
+			} else
+			if (objArg == "tags"_s)
 			{
 				std::copy(pdb.tags_begin(), pdb.tags_end(), std::ostream_iterator<TagDefT>(std::cout, "\n"));
 			} else
-			if (objArg == "file"_s || objArg == "files"_s
-					|| objArg == "rnode"_s || objArg == "rnodes"_s)
+			if (objArg == "file"_s || objArg == "rnode"_s)
+			{
+				auto rn = pdb.get_rnode(std::stoi(xtraArgs.at(0)));
+				std::cout << "Print all tag pairs for the file:" << std::endl;
+				std::copy(pdb.rnode_tag_set_begin(rn), pdb.rnode_tag_set_end(rn)
+					, std::ostream_iterator<TagDefValPairT>(std::cout, "\n"));
+
+			} else
+			if (objArg == "files"_s || objArg == "rnodes"_s)
 			{
 				std::copy(pdb.rnodes_begin(), pdb.rnodes_end(), std::ostream_iterator<RNode>(std::cout, "\n"));
 			} else
@@ -243,8 +257,8 @@ int main (int argc, char* argv[])
 			{
 				if (xtraArgs.size() >= 3)
 				{
-					pdb.create_tag(xtraArgs.at(0), xtraArgs.at(1), xtraArgs.at(2));
-					LOG(INFO) << "Created new tag.";
+					auto new_tag = pdb.create_tag(xtraArgs.at(0), xtraArgs.at(1), xtraArgs.at(2));
+					LOG(INFO) << "Created new tag: " << *new_tag;
 				} else
 				{
 					LOG(WARNING) << "Couldn't create new tag. Not enough arguments.";
@@ -253,8 +267,8 @@ int main (int argc, char* argv[])
 			if (objArg == "file"_s || objArg == "files"_s
 					|| objArg == "rnode"_s || objArg == "rnodes"_s)
 			{
-				pdb.create_rnode();
-				LOG(WARNING) << "There isn't a good way to find this file/rnode once it's created!";
+				auto new_file = pdb.create_rnode();
+				LOG(WARNING) << "Created new file/rnode: " << *new_file;
 			} else
 			if (objArg == "scope"_s || objArg == "scopes"_s )
 			{
@@ -312,7 +326,36 @@ int main (int argc, char* argv[])
 			{
 				LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
 			}
-		}
+		} else
+		if (cmdArg == "modify"_s)
+		{
+			if (objArg == "tag"_s || objArg == "tags"_s )
+			{
+				if (xtraArgs.size() == 2)
+				{
+					auto td = pdb.get_tag(xtraArgs.at(0));
+					std::size_t rn_uuid = std::stoi(xtraArgs.at(1));
+					auto rn = pdb.get_rnode(rn_uuid);
+					pdb.modify_rnode_tag(td, rn, ""_s);
+				} else
+				if (xtraArgs.size() == 3)
+				{
+					auto td = pdb.get_tag(xtraArgs.at(0));
+					std::size_t rn_uuid = std::stoi(xtraArgs.at(1));
+					auto rn = pdb.get_rnode(rn_uuid);
+					pdb.modify_rnode_tag(td, rn, xtraArgs.at(2));
+				}
+			} else
+			if (objArg == "file"_s || objArg == "files"_s
+					|| objArg == "rnode"_s || objArg == "rnodes"_s)
+			{
+				LOG(WARNING) << "Sorry, this syntax just doesn't make any sense!";
+			} else
+			if (objArg == "scope"_s || objArg == "scopes"_s )
+			{
+				LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
+			}
+		} 
 	}
 
 //  } catch (const TCLAP::ArgException& e)

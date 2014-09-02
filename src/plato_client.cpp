@@ -8,7 +8,6 @@
 #include <boost/interprocess/containers/string.hpp>
 
 #include <vector>
-#include <map>
 #include <string>
 #include <utility>
 #include <algorithm>
@@ -21,8 +20,6 @@
 
 #include <prototype_structs.hpp>
 
-#include <tclap/CmdLine.h>
-
 #include <easylogging++.h>
 _INITIALIZE_EASYLOGGINGPP
 
@@ -34,39 +31,13 @@ using namespace boost::interprocess;
 
  */
 
-struct command_struct {
-	std::string description;
-	//bool can_have_args;
-	//bool needs_args;
-	//bool has_multiple_args;
-	std::size_t number_of_args;	//zero indicates infinite?
-
-};
-
 void
 logging_configuration()
 {
 	el::Configurations conf("plato_easylogging++.conf");
 
 	el::Loggers::reconfigureLogger("default", conf);
-	//el::Loggers::reconfigureAllLoggers(conf);
 }
-
-/*
-std::map<std::string, command_struct> allowed_commandMap = {
-		{"help",		{"provides help", 1}}
-		{"create",		{"create an object", 1}}
-		{"new", 		{"create an object", 1}}
-		{"delete", 		{"delete an object", 1}}
-		{"list", 		{"list objects", 1}}
-		{"modify", 		{"modify an object", 1}}
-		{"merge", 		{"merge an object", 1}}
-		{"duplicate",	
-		{"add", 
-		{"remove" 
-		};
-*/
-
 
 
 std::vector<std::string> allowed_commands = {
@@ -84,7 +55,6 @@ std::vector<std::string> allowed_commands = {
 		"remove" 
 		};
 
-//std::map<std::string, > allowed_cmd_objects = {
 std::vector<std::string> allowed_cmd_objects = {
 		"tag",
 		"tags",
@@ -95,27 +65,6 @@ std::vector<std::string> allowed_cmd_objects = {
 		"scope",
 		"scopes"
 		};
-
-
-/*
-		list tags		lists all tags
-		list tag		lists 
-
-		list-tags
-		create-tag [3]
-		delete-tag [1]
-		view-tag   [1]
-		modify-tag [1] [3]
-
-		list-files
-		create-file	
-		delete-file
-		view-file
-		modify-file
-
-		
-
- */
 
 void
 parse_cmd_line_arguments (int argc, char* argv[])
@@ -138,36 +87,6 @@ int main (int argc, char* argv[])
 {
 	logging_configuration();
 	
-//  try{
-	/*
-	TCLAP::CmdLine cmd("Plato userspace utility", ' ', "0.01");
-
-	TCLAP::ValuesConstraint<std::string> cmdAllowedVals (allowed_commands);
-	TCLAP::ValueArg<std::string> commandArg ("c", "command", "Tell the client what to do.", true, "help", &cmdAllowedVals, cmd);
-	//TCLAP::UnlabeledValueArg<std::string> commandArg ("command", "Tell the client what to do.", true, "help", &cmdAllowedVals, cmd);
-
-
-	TCLAP::ValuesConstraint<std::string> cmdAllowedObjs (allowed_cmd_objects);
-
-
-	TCLAP::ValueArg<std::string> objectArg ("t", "object", "tells the client what to operate on", true, "", &cmdAllowedObjs, cmd);
-	//TCLAP::UnlabeledValueArg<std::string> objectArg ("what", "tells the client what to operate on", true, "", &cmdAllowedObjs, cmd);
-
-
-//	TCLAP::UnlabeledMultiArg<std::string> otherArgs ("other arguments", "like the names of the files or tags, etc.", false, "filenames, tag names, etc.", cmd);
-
-	cmd.setExceptionHandling(false);
-
-	cmd.parse(argc, argv);
-
-	auto cmdArg = commandArg.getValue();
-	auto objArg = objectArg.getValue();
-	//auto objArg = otherArgs.getValue().front();
-//	auto xtraArgs = otherArgs.getValue();
-
-	LOG(INFO) << "Started " << argv[0] << ". Command arg was \"" << cmdArg << "\" and object arg was \"" << objArg << "\".";
-	*/
-
 	LOG(INFO) << "Started " << argv[0] << ".";
 
 	std::string cmdArg = "help";
@@ -212,8 +131,6 @@ int main (int argc, char* argv[])
 		PlatoDB pdb (*segment);
 
 		LOG(INFO) << "Created PlatoDB object.";
-
-		//pdb.print_basic_diagnostics (std::cout);
 
 		
 		//	Go through the commands
@@ -358,9 +275,6 @@ int main (int argc, char* argv[])
 		} 
 	}
 
-//  } catch (const TCLAP::ArgException& e)
-//  { LOG(FATAL) << "Failed to parse arguments. Error is: " << e.error() << " " << e.argId(); }
-	
 	return 0;
 }
 

@@ -24,15 +24,6 @@
 
 
 //////////////////////////////////////////////////////////////////////////////
-//					Boost UUID Library Headers
-//////////////////////////////////////////////////////////////////////////////
-
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
-
-
-//////////////////////////////////////////////////////////////////////////////
 //					
 //////////////////////////////////////////////////////////////////////////////
 
@@ -44,20 +35,9 @@ using namespace boost::interprocess;
 //Typedefs of allocators and containers
 typedef managed_shared_memory::segment_manager                       segment_manager_t;
 typedef allocator<void, segment_manager_t>                           void_allocator;
-typedef allocator<int, segment_manager_t>                            int_allocator;
-typedef vector<int, int_allocator>                                   int_vector;
-typedef allocator<int_vector, segment_manager_t>                     int_vector_allocator;
-typedef vector<int_vector, int_vector_allocator>                     int_vector_vector;
 typedef allocator<char, segment_manager_t>                           char_allocator;
 typedef basic_string<char, std::char_traits<char>, char_allocator>   char_string;
 
-
-//Definition of the map holding a string as key and char_string as mapped type
-typedef std::pair<const char_string, char_string>                      map_value_type;
-typedef std::pair<char_string, char_string>                            movable_to_map_value_type;
-typedef allocator<map_value_type, segment_manager_t>                    map_value_type_allocator;
-typedef map< char_string, char_string
-           , std::less<char_string>, map_value_type_allocator>          shared_map_type;
 
 
 std::string operator "" _s(const char* str, size_t /*length*/)
@@ -108,17 +88,9 @@ get_equivalent_iterator	( InputIterator1 first1		//	beginning of first range
 }
 
 
-//	Before we turn on the UUIDs, we need to figure out if we want to change
-//	from size_t inside of RNode or if we want to reduce the size of UUIDs.
-//#define PLATO_USE_UUID 1
 
-//template <typename UuidT = std::size_t>
 struct RNode {
-#ifdef PLATO_USE_UUID
-	typedef boost::uuids::uuid UuidT;
-#else
 	typedef std::size_t UuidT;
-#endif
 
 	UuidT uuid;
 
@@ -143,14 +115,6 @@ struct TagDef {
 	StringT name;
 	StringT type;
 	StringT description;
-
-/*
-	TagDef(StringT in_name, StringT in_type, StringT in_description, const void_allocator& void_alloc)
-		: name(in_name, void_alloc)
-		, type(in_type, void_alloc)
-		, description(in_description, void_alloc)
-	{ }
-*/
 
 	template <typename StringInputT>
 	TagDef(StringInputT in_name, StringInputT in_type, StringInputT in_description, const void_allocator& void_alloc)
@@ -218,16 +182,12 @@ struct TagVal {
 
 	typedef list<TagDefT, TagDefTAlloc> ListTagDefT;
 
-	//ListTagDefT* tagArray = segment->construct<ListTagDefT>("TagDefArray")(alloc_inst);
-
 	
 
 	//	RNode Array container
 	typedef allocator<RNode, segment_manager_t> RNodeAlloc;
 
 	typedef list<RNode, RNodeAlloc> ListRNodeT;
-
-	//ListRNodeT* rnodeArray = segment->construct<ListRNodeT>("RNodeArray")(alloc_inst);
 
 	
 	
@@ -238,8 +198,6 @@ struct TagVal {
 
 	typedef list<TagValT, TagValTAlloc> ListTagValT;
 
-	//ListTagValT* tagValArray = segment->construct<ListTagValT>("TagValArray")(alloc_inst);
-
 	
 
 	//	New pair typedefs (use iterators)
@@ -247,11 +205,6 @@ struct TagVal {
 
 	typedef std::pair<ListTagDefT::iterator, ListTagValT::iterator>TagDefValPairT;
 
-
-	//	Old pair typedefs (use offset_ptr)
-//	typedef std::pair<offset_ptr<RNode>, offset_ptr<TagValT> > RNodeValOffsetPairT;
-
-//	typedef std::pair<offset_ptr<TagDefT>, offset_ptr<TagValT> > TagDefValOffsetPairT;
 
 	
 	typedef allocator<RNodeValPairT, segment_manager_t> RNodeValPairTAlloc;
@@ -290,14 +243,6 @@ struct pair_first_equal_to {
 	typedef bool result_type;
 };
 
-/*
-template <typename PairT>
-pair_first_equal_to<PairT>
-make_pair_first_equal_to_fn(const & val)
-{
-	return pair_first_equal_to<PairT>(val);
-}
-*/
 
 template <typename PairT>
 struct pair_second_equal_to {
@@ -313,15 +258,6 @@ struct pair_second_equal_to {
 	
 	typedef bool result_type;
 };
-
-/*
-template <typename PairT>
-pair_second_equal_to<PairT>
-make_pair_second_equal_to_fn(const & val)
-{
-	return pair_second_equal_to<PairT>(val);
-}
-*/
 
 
 std::ostream&
@@ -358,17 +294,9 @@ public:
 
 	ListTagValT*			allTagVals;
 
-	//RNodeValPairTListList*	allTagDefTagValPairSetsForAnRNode;
-	//TagDefValPairTListList*	allTagDefTagValPairSetsForAnRNode;
 	TagDefValPairTListList*	td_tv_pair_sets_for_each_rn;
 
-	//TagDefValPairTListList*	allRNodeTagValPairSetsForATagDef;
-	//RNodeValPairTListList*	allRNodeTagValPairSetsForATagDef;
 	RNodeValPairTListList*	rn_tv_pair_sets_for_each_td;
-
-#ifdef PLATO_USE_UUID	
-	boost::uuids::random_generator* uuid_rg;
-#endif
 	
 	std::size_t* last_uuid;
 
@@ -385,10 +313,6 @@ public:
 		td_tv_pair_sets_for_each_rn = segment.find<TagDefValPairTListList>("RNodeValPairArray").first;
 		rn_tv_pair_sets_for_each_td = segment.find<RNodeValPairTListList>("TagDefValPairArray").first;
 
-#ifdef PLATO_USE_UUID	
-		uuid_rg = segment.find<boost::uuids::random_generator>("UuidRG").first;
-#endif
-
 		last_uuid = segment.find<std::size_t>("LastUuid").first;
 	}
 
@@ -401,10 +325,6 @@ public:
 		allTagVals = segment.find_or_construct<ListTagValT>("TagValArray")(void_alloc);
 		td_tv_pair_sets_for_each_rn = segment.find_or_construct<TagDefValPairTListList>("RNodeValPairArray")(void_alloc);
 		rn_tv_pair_sets_for_each_td = segment.find_or_construct<RNodeValPairTListList>("TagDefValPairArray")(void_alloc);
-
-#ifdef PLATO_USE_UUID
-		uuid_rg = segment.find_or_construct<boost::uuids::random_generator>("UuidRG")();
-#endif
 
 		last_uuid = segment.find_or_construct<std::size_t>("LastUuid")();
 	}
@@ -521,10 +441,6 @@ public:
 	//create_tag (char_string name, char_string type, char_string description)
 	create_tag (StringInputT name, StringInputT type, StringInputT description)
 	{
-		//return allTagDefs->emplace_back(name, type, description);
-		//allTagDefs->emplace_back(name, type, description);
-		//return allTagDefs->
-	
 		allTagDefs->emplace_front(name, type, description, void_alloc);
 		rn_tv_pair_sets_for_each_td->push_front(ListRNodeValPairT(void_alloc));
 		return allTagDefs->begin();
@@ -546,7 +462,6 @@ public:
 		auto td = std::find_if(allTagDefs->begin(), allTagDefs->end(),
 			[&](TagDefT x){
 				return std::equal(x.name.begin(), x.name.end(), comp_name.begin());
-				//return x.name == comp_name;
 			});
 		return td;
 	}
@@ -596,6 +511,7 @@ public:
 
 		//	Erase the set of {rnode, tagval} pairs for the tagdef we're deleting
 		rn_tv_pair_sets_for_each_td->erase( taggedFiles );
+		
 		//	Finally, erase the tagdef
 		allTagDefs->erase(tagDef);
 	}
@@ -637,14 +553,8 @@ public:
 	ListRNodeT::iterator
 	create_rnode ()
 	{
-
-#ifndef PLATO_USE_UUID
 		++(*last_uuid);
 		allRNodes->emplace_front(*last_uuid);
-		//allRNodes->emplace_front(0);
-#else
-		allRNodes->emplace_front((*uuid_rg)());
-#endif
 
 		td_tv_pair_sets_for_each_rn->push_front(ListTagDefValPairT(void_alloc));
 		return allRNodes->begin();
@@ -690,7 +600,6 @@ public:
 		//	Get the set of all {TagDef, tagval} pairs for the rnode we're deleting
 		auto td_pair_set = get_tagdef_set_for_rnode (rnode);
 
-
 		//	Iterate through the refences to tagval instances and erase them from
 		//	allTagVals.
 		//	Then go through the tagdefs and remove the references to that tagval
@@ -698,23 +607,11 @@ public:
 		{
 			//	Erase the tagval instance
 			allTagVals->erase(td_pair.second);
-
-			//	
+	
 			auto rnode_set = get_rnode_set_for_tagdef (td_pair.first);
 
-			//rnode_set->remove_if(pair_first_equal_to(rnode));
-			
-			//typedef typename decltype(*rnode_set)::value_type pair_cmp_type;
-			//typedef typename decltype(declval(*rnode_set))::value_type pair_cmp_type;
-			
 			rnode_set->remove_if(pair_first_equal_to<RNodeValPairT>(rnode));
-
-			//rnode_set->remove_if(pair_first_equal_to(rnode));
-
-			
-
 		}
-
 
 		//	Erase the set of {tagdef, tagval} pairs for the rnode we're deleting
 		td_tv_pair_sets_for_each_rn->erase( td_pair_set );
@@ -731,8 +628,8 @@ public:
 	add_tag_to_rnode (ListTagDefT::iterator tagdef, ListRNodeT::iterator rnode, StringInputT value)
 	{
 		allTagVals->emplace_front(value, void_alloc);
+		
 		auto tagval = allTagVals->begin();
-
 
 		auto rnode_set = get_rnode_set_for_tagdef (tagdef);
 
@@ -808,9 +705,6 @@ public:
 		//	Find the {rnode, tagval} pair which matches the rnode
 		auto rn_tv_pair = std::find_if( rn_tv_pair_set->begin()
 										, rn_tv_pair_set->end()
-										//, [](auto this_rn_tv_pair){
-										//		return this_rn_tv_pair.first == rnode;
-										//	}
 										, pair_first_equal_to<RNodeValPairT>(rnode)
 										);
 
@@ -840,16 +734,6 @@ public:
 		//	Or by the rnode's tagdef set
 		//auto tagdef_set = get_tagdef_set_for_rnode(rnode);
 	}
-
-	//template <typename Predicate>
-
-
-	
-
-
-
-
-
 
 };
 

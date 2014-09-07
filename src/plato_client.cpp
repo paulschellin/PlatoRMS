@@ -2,6 +2,10 @@
 // g++ -std=c++11 -Wall -I src/ src/plato_client.cpp -o bin/plato_client
 
 #include <boost/interprocess/managed_shared_memory.hpp>
+
+#include <boost/interprocess/file_mapping.hpp>
+#include <boost/interprocess/managed_mapped_file.hpp>
+
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/map.hpp>
 #include <boost/interprocess/containers/vector.hpp>
@@ -113,11 +117,21 @@ int main (int argc, char* argv[])
 	}
 	else
 	{
-		std::shared_ptr<managed_shared_memory> segment;
-		std::string segment_name ("PlatoDaemonSharedMemory");
+		//std::shared_ptr<managed_shared_memory> segment;
+		//std::string segment_name ("PlatoDaemonSharedMemory");
+		unsigned shm_region_size_bytes = 1048576; // estimate_space_requirements();
+		const std::string mmapped_filename ("PlatoDaemonFile.mmap");
+		const std::string segment_name(mmapped_filename);
+		std::shared_ptr<managed_mapped_file> segment;
+
+
+		segment.reset(new managed_mapped_file(open_or_create, mmapped_filename.c_str(), shm_region_size_bytes));
+
 
 		try {
-			segment.reset(new managed_shared_memory(open_only, segment_name.c_str()));
+			segment.reset(new managed_mapped_file(open_or_create, mmapped_filename.c_str(), shm_region_size_bytes));
+
+			//segment.reset(new managed_shared_memory(open_only, segment_name.c_str()));
 		} catch (const interprocess_exception& e) {
 			LOG(FATAL) << "An exception occurred while attempting to connect to the shared memory segment. The exception is: " << e.what();
 			std::exit(1);

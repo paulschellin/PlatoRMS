@@ -5,6 +5,9 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/managed_shared_memory.hpp>
+#include <boost/interprocess/file_mapping.hpp>
+#include <boost/interprocess/managed_mapped_file.hpp>
+
 #include <boost/interprocess/allocators/allocator.hpp>
 
 #include <boost/interprocess/containers/map.hpp>
@@ -33,7 +36,8 @@
 using namespace boost::interprocess;
 
 //Typedefs of allocators and containers
-typedef managed_shared_memory::segment_manager                       segment_manager_t;
+typedef managed_mapped_file::segment_manager                       segment_manager_t;
+//typedef managed_shared_memory::segment_manager                       segment_manager_t;
 typedef allocator<void, segment_manager_t>                           void_allocator;
 typedef allocator<char, segment_manager_t>                           char_allocator;
 typedef basic_string<char, std::char_traits<char>, char_allocator>   char_string;
@@ -304,7 +308,11 @@ public:
 
 	PlatoDB () = delete;
 
-	PlatoDB (managed_shared_memory& segment)
+	//typedef managed_shared_memory ManagedSharedMemoryT;
+	typedef managed_mapped_file ManagedSharedMemoryT;
+
+	//template <typename ManagedSharedMemoryT>
+	PlatoDB (ManagedSharedMemoryT& segment)
 		: void_alloc(segment.get_segment_manager())
 	{
 		allTagDefs = segment.find<ListTagDefT>("TagDefArray").first;
@@ -317,7 +325,8 @@ public:
 	}
 
 	
-	PlatoDB (managed_shared_memory& segment, const void_allocator& input_alloc)
+	//template <typename ManagedSharedMemoryT>
+	PlatoDB (ManagedSharedMemoryT& segment, const void_allocator& input_alloc)
 		: void_alloc(input_alloc)
 	{
 		allTagDefs = segment.find_or_construct<ListTagDefT>("TagDefArray")(void_alloc);

@@ -78,6 +78,7 @@ _INITIALIZE_EASYLOGGINGPP
 //					-----
 //////////////////////////////////////////////////////////////////////////////
 
+#include <plato_shared_memory.hpp>
 #include <prototype_structs.hpp>
 #include <plato_common_functions.hpp>
 
@@ -246,6 +247,7 @@ int command_handler (std::ostream& os, po::variables_map& vm)
 //					-----
 //////////////////////////////////////////////////////////////////////////////
 
+/*
 	std::vector< std::pair< const std::string, const std::string > > spv = {
 		{"FileMap", "hpp"}
 		, {"FileMap", "hpp"}
@@ -265,7 +267,7 @@ int command_handler (std::ostream& os, po::variables_map& vm)
 		, {"plato_client", "cpp"}
 		, {"plato_daemon", "cpp"}
 		};
-
+*/
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -301,7 +303,7 @@ int main (int argc, char* argv[])
 
 	unsigned shm_region_size_bytes = 1048576; // estimate_space_requirements();
 	const std::string shm_region_name (vm["shared-memory-name"].as<std::string>().c_str());
-	const std::string mmaped_filename(vm["memory-mapped-filename"].as<std::string>().c_str());
+	const std::string mmapped_filename(vm["memory-mapped-filename"].as<std::string>().c_str());
 
    //Remove shared memory on construction and destruction
    /*
@@ -319,6 +321,8 @@ int main (int argc, char* argv[])
 	///////
 	///////
 
+	/*
+
 	if (vm["mode"].as<std::string>().compare("mmap") == 0)
 	{
 		//	Remove the file mapping
@@ -328,19 +332,19 @@ int main (int argc, char* argv[])
 		std::filebuf fbuf;
 
 		try {
-			fbuf.open(mmaped_filename.c_str()
+			fbuf.open(mmapped_filename.c_str()
 				, std::ios_base::in | std::ios_base::out | std::ios_base::trunc | std::ios_base::binary);
 		}
 		catch (const interprocess_exception& e)
 		{
 			std::cout << "An exception occurred while trying to open \""
-				<< mmaped_filename << "\" for the filebuf. The exception is: "
+				<< mmapped_filename << "\" for the filebuf. The exception is: "
 				<< e.what() << std::endl;
 		}
 		catch (...)
 		{
 			std::cout << "An unknown/unexpected exception occurred while trying to open \""
-				<< mmaped_filename << "\" for the filebuf." << std::endl;
+				<< mmapped_filename << "\" for the filebuf." << std::endl;
 		}
 
 
@@ -354,13 +358,13 @@ int main (int argc, char* argv[])
 		catch (const interprocess_exception& e)
 		{
 			std::cout << "An exception occurred while trying to pubseekoff the filebuffer for \""
-				<< mmaped_filename << "\". The exception is: "
+				<< mmapped_filename << "\". The exception is: "
 				<< e.what() << std::endl;
 		}
 		catch (...)
 		{
 			std::cout << "An unknown/unexpected exception occurred while trying to pubseekoff the filebuffer for \""
-				<< mmaped_filename << "\"." << std::endl;
+				<< mmapped_filename << "\"." << std::endl;
 		}
 
 		try {
@@ -369,13 +373,13 @@ int main (int argc, char* argv[])
 		catch (const interprocess_exception& e)
 		{
 			std::cout << "An exception occurred while trying to sputc the filebuffer for \""
-				<< mmaped_filename << "\". The exception is: "
+				<< mmapped_filename << "\". The exception is: "
 				<< e.what() << std::endl;
 		}
 		catch (...)
 		{
 			std::cout << "An unknown/unexpected exception occurred while trying to sputc the filebuffer for \"."
-				<< mmaped_filename << "\"" << std::endl;
+				<< mmapped_filename << "\"" << std::endl;
 		}
 
 
@@ -384,17 +388,17 @@ int main (int argc, char* argv[])
 		//	Create the file mapping
 		std::shared_ptr<file_mapping> m_file;
 		try{
-			//file_mapping m_file(mmaped_filename.c_str(), read_write);
-			m_file.reset(new file_mapping(mmaped_filename.c_str(), read_write));
+			//file_mapping m_file(mmapped_filename.c_str(), read_write);
+			m_file.reset(new file_mapping(mmapped_filename.c_str(), read_write));
 		}
 		catch (const interprocess_exception& e)
 		{
-			std::cout << "An exception occurred while trying to create the file mapping for \"" << mmaped_filename << "\". The exception is: "
+			std::cout << "An exception occurred while trying to create the file mapping for \"" << mmapped_filename << "\". The exception is: "
 			<< e.what() << std::endl;
 		}
 		catch (...)
 		{
-			std::cout << "An unknown/unexpected exception occurred while trying to create the file mapping for \"" << mmaped_filename << "\"." << std::endl;
+			std::cout << "An unknown/unexpected exception occurred while trying to create the file mapping for \"" << mmapped_filename << "\"." << std::endl;
 		}
 
 
@@ -406,12 +410,12 @@ int main (int argc, char* argv[])
 		}
 		catch (const interprocess_exception& e)
 		{
-			std::cout << "An exception occurred while trying to create the mmapped region for \"" << mmaped_filename << "\". The exception is: "
+			std::cout << "An exception occurred while trying to create the mmapped region for \"" << mmapped_filename << "\". The exception is: "
 			<< e.what() << std::endl;
 		}
 		catch (...)
 		{
-			std::cout << "An unknown/unexpected exception occurred while trying to create the mmapped region for \"" << mmaped_filename << "\"." << std::endl;
+			std::cout << "An unknown/unexpected exception occurred while trying to create the mmapped region for \"" << mmapped_filename << "\"." << std::endl;
 		}
 
 
@@ -422,6 +426,8 @@ int main (int argc, char* argv[])
 		std::memset(addr, 1, size);
 	}
 	
+	*/
+
 	///////
 	///////
 	///////
@@ -429,19 +435,21 @@ int main (int argc, char* argv[])
 
 
 	//	Create shared memory region
-	std::shared_ptr<managed_shared_memory> segment;
+	//std::shared_ptr<managed_shared_memory> segment;
 	
+	GenericSharedMemory<managed_mapped_file> sh_memory (mmapped_filename.c_str());
 	
-	//std::shared_ptr<managed_mapped_file> segment;
+	/*
+	std::shared_ptr<managed_mapped_file> segment;
 	
 	try {
 
 
 
    		//managed_shared_memory
-		segment.reset(new managed_shared_memory(create_only,shm_region_name.c_str(), shm_region_size_bytes)
-);
-		//segment.reset(new managed_mapped_file(create_only, mmaped_filename.c_str()));
+		//segment.reset(new managed_shared_memory(create_only,shm_region_name.c_str(), shm_region_size_bytes)
+//);
+		segment.reset(new managed_mapped_file(open_or_create, mmapped_filename.c_str(), shm_region_size_bytes));
 	}
 	catch (interprocess_exception& e)
 	{
@@ -453,18 +461,23 @@ int main (int argc, char* argv[])
 					<< std::endl;
 		std::exit(1);
 	}
-
+	*/
 	LOG(INFO) << "Created the shared memory segment \"" << shm_region_name << "\".";
 
 
 
 
    //An allocator convertible to any allocator<T, segment_manager_t> type
-	void_allocator alloc_inst (segment->get_segment_manager());
+	//void_allocator alloc_inst (segment->get_segment_manager());
+
+
+	//void_allocator m_alloc_inst (m_segment->get_segment_manager());
 
 	
-	print_basic_shm_diagnostics(std::cout, *segment);
+	//print_basic_shm_diagnostics(std::cout, *segment);
 
+
+	//print_basic_shm_diagnostics(std::cout, *m_segment);
 
 	/*
 	//	Construct the tag map in shared memory
@@ -531,7 +544,9 @@ int main (int argc, char* argv[])
 	ListTagDefValPairT* tagDefValPairArray= segment->construct<ListTagDefValPairT>("TagDefValPairArray")(alloc_inst);
 */
 
-	PlatoDB pdb (*segment, alloc_inst);
+	//PlatoDB pdb (*segment, alloc_inst);
+
+	PlatoDB pdb (*sh_memory.segment);
 
 	LOG(INFO) << "Created PlatoDB object.";
 
@@ -592,7 +607,7 @@ int main (int argc, char* argv[])
 	pdb.add_tag_to_rnode (tag_we_want_to_delete_later, new_file, "this should be deleted by the end!"_s);
 
 	
-	print_basic_shm_diagnostics(std::cout, *segment);
+	//print_basic_shm_diagnostics(std::cout, *segment);
 	//auto ts_begin = pdb.rnode_tag_set_begin(new_file);
 	//auto ts_end = pdb.rnode_tag_set_end(new_file);
 

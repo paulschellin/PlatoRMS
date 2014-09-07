@@ -171,8 +171,10 @@
 
  */
 
+template <typename ManagedSharedMemoryT>
 void
-print_basic_shm_diagnostics (std::ostream& os, managed_shared_memory& segment)
+print_basic_shm_diagnostics (std::ostream& os, ManagedSharedMemoryT& segment)
+//print_basic_shm_diagnostics (std::ostream& os, managed_shared_memory& segment)
 {
 	os << std::endl;
 	os << "! Basic Shared Memory Diagnostic Information:" << std::endl;

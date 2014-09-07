@@ -27,10 +27,14 @@
 namespace PlatoDaemon {
 	namespace bi = boost::interprocess;
 
+	typedef bi::managed_mapped_file ManagedSharedMemoryT;
+	//typedef bi::managed_shared_memory ManagedSharedMemoryT;
 
-	typedef bi::allocator<char, bi::managed_shared_memory::segment_manager> SharedCharAllocator;
+	typedef ManagedSharedMemoryT::segment_manager SegmentManagerT;
 
-	typedef bi::allocator<void, bi::managed_shared_memory::segment_manager> SharedVoidAllocator;
+	typedef bi::allocator<char, ManagedSharedMemoryT::segment_manager> SharedCharAllocator;
+
+	typedef bi::allocator<void, ManagedSharedMemoryT::segment_manager> SharedVoidAllocator;
 
 	typedef bi::basic_string<
 						  char
@@ -46,7 +50,7 @@ namespace PlatoDaemon {
 	typedef std::pair<KeyType, MappedType> ValueType;
 	//typedef std::pair<const KeyType, MappedType> ValueType;
 
-	typedef bi::allocator<ValueType, bi::managed_shared_memory::segment_manager> SharedValueTypeAllocator;
+	typedef bi::allocator<ValueType, ManagedSharedMemoryT::segment_manager> SharedValueTypeAllocator;
 
 	typedef bi::map<KeyType, MappedType, std::less<KeyType>, SharedValueTypeAllocator> MyMap;
 

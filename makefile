@@ -10,7 +10,7 @@ source_dir=src/
 output_dir=bin/
 
 
-programs=plato_daemon plato_client
+programs=plato_daemon plato_client plato_fuse
 
 program_sources=$(addprefix $(source_dir),$(addsuffix .cpp,$(programs)))
 
@@ -32,11 +32,13 @@ c_flags=-Wall -Wextra -g -ggdb
 
 ld_flags=-Wall -Wextra -g -ggdb
 
-include_dirs=-I. -I src/ -I easyloggingpp/src -I tclap-1.2.1/include/
+include_dirs=-I. -I src/ -I easyloggingpp/src $(shell pkg-config fuse --cflags)
 
 boost_libs=-lboost_program_options -lboost_system -lboost_iostreams -lboost_filesystem -lboost_serialization
 
-libs=$(boost_libs)
+fuse_libs=$(shell pkg-config fuse --cflags --libs)
+
+libs=$(boost_libs) $(fuse_libs)
 
 
 

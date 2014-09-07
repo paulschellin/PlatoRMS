@@ -21,7 +21,7 @@
 
 #include <cstdlib>	//	for std::exit()
 
-
+#include <plato_shared_memory.hpp>
 #include <prototype_structs.hpp>
 
 #include <easylogging++.h>
@@ -122,9 +122,13 @@ int main (int argc, char* argv[])
 		unsigned shm_region_size_bytes = 1048576; // estimate_space_requirements();
 		const std::string mmapped_filename ("PlatoDaemonFile.mmap");
 		const std::string segment_name(mmapped_filename);
-		std::shared_ptr<managed_mapped_file> segment;
+		//std::shared_ptr<managed_mapped_file> segment;
 
 
+		GenericSharedMemory<managed_mapped_file> sh_memory (mmapped_filename);
+
+
+		/*
 		segment.reset(new managed_mapped_file(open_or_create, mmapped_filename.c_str(), shm_region_size_bytes));
 
 
@@ -139,10 +143,11 @@ int main (int argc, char* argv[])
 			LOG(FATAL) << "An unknown/unexpected exception occurred while attempting to connect to the shared memory segment.";
 			std::exit(1);
 		}
+		*/
 
 		LOG(INFO) << "Connected to shared memory segment \"" << segment_name << "\".";
 	
-		PlatoDB pdb (*segment);
+		PlatoDB pdb (*sh_memory.segment);
 
 		LOG(INFO) << "Created PlatoDB object.";
 

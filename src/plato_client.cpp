@@ -297,189 +297,41 @@ int main (int argc, char* argv[])
 		if (cmdArg == "list"_s)
 		{
 			if (objArg == "tag"_s)
-			{
 				list_tag(pdb, xtraArgs);
-				/*
-				auto td = pdb.get_tag(xtraArgs.at(0));
-
-				std::cout << "Print all file/rnode pairs for the tag:" << std::endl;
-				std::copy(pdb.tagdef_rnode_set_begin(td), pdb.tagdef_rnode_set_end(td)
-						, std::ostream_iterator<RNodeValPairT>(std::cout, "\n"));
-				*/
-			} else
-			if (objArg == "tags"_s)
-			{
+			else if (objArg == "tags"_s)
 				list_tags(pdb, xtraArgs);
-				//std::copy(pdb.tags_begin(), pdb.tags_end(), std::ostream_iterator<TagDefT>(std::cout, "\n"));
-			} else
-			if (objArg == "file"_s || objArg == "rnode"_s)
-			{
+			else if (objArg == "file"_s || objArg == "rnode"_s)
 				list_rnode(pdb, xtraArgs);
-				/*
-				bfs::path p = bfs::canonical(bfs::path(xtraArgs.front()));
-
-				if (bfs::exists(p))
-				{
-					//auto rn = pdb.get_rnode(std::stoi(xtraArgs.at(0)));
-					
-					auto path_tag = pdb.get_tag("path"_s);
-
-					auto rn = pdb.get_rnode_tag_with(path_tag, p.relative_path().string());
-
-					std::cout << "Print all tag pairs for the file:" << std::endl;
-					std::copy(pdb.rnode_tag_set_begin(rn), pdb.rnode_tag_set_end(rn)
-						, std::ostream_iterator<TagDefValPairT>(std::cout, "\n"));
-
-				}
-				else
-				{
-					LOG(WARNING) << "Could not list file/rnode. The file: " << p << " does not exist!";
-				}
-				*/
-			} else
-			if (objArg == "files"_s || objArg == "rnodes"_s)
-			{
+			else if (objArg == "files"_s || objArg == "rnodes"_s)
 				list_rnodes(pdb, xtraArgs);
-				//std::copy(pdb.rnodes_begin(), pdb.rnodes_end(), std::ostream_iterator<RNode>(std::cout, "\n"));
-			} else
-			if (objArg == "scope"_s || objArg == "scopes"_s )
-			{
+			else if (objArg == "scope"_s || objArg == "scopes"_s )
 				list_scopes(pdb, xtraArgs);
-				//std::cout << "Hm... scopes don't appear to be implemented yet. Sorry!" << std::endl;
-			}
+			else
+				LOG(WARNING) << "Invalid argument for list: " << objArg;
 
 		} else
 		if (cmdArg == "create"_s || cmdArg == "new"_s )
 		{
 			if (objArg == "tag"_s || objArg == "tags"_s )
-			{
 				create_tags(pdb, xtraArgs);
-
-				/*
-				if (xtraArgs.size() >= 3)
-				{
-					auto new_tag = pdb.create_tag(xtraArgs.at(0), xtraArgs.at(1), xtraArgs.at(2));
-					
-					LOG(INFO) << "Created new tag: " << *new_tag;
-				} else
-				{
-					LOG(WARNING) << "Couldn't create new tag. Not enough arguments.";
-				}
-				*/
-			} else
-			if (objArg == "file"_s || objArg == "files"_s
-					|| objArg == "rnode"_s || objArg == "rnodes"_s)
-			{
-				create_rnodes(pdb, xtraArgs);
-
-				/*
-				if (xtraArgs.size() >= 1)
-				{
-					bfs::path p = bfs::canonical(bfs::path(xtraArgs.front()));
-
-					if (bfs::exists(p))
-					{
-						auto fs_root = p.root_path();
-						auto fs_path = p.relative_path();
-
-						auto fs_filename = p.filename();
-
-
-						//pdb.get_tag("
-						//pdb.add_tag_to_rnode(pdb.get_tag("filesystem"_s, new_file, fs_root.string());
-						//pdb.add_tag_to_rnode(pdb.get_tag("path"_s, new_file, fs_path.string());
-
-						auto pathTag = pdb.get_tag("path"_s);
-						//auto pathTagRNodeSetBegin = pdb.tagdef_rnode_set_begin(pathTag);
-						//auto pathTagRNodeSetEnd = pdb.tagdef_rnode_set_end(pathTag);
-
-						//auto fsTag = pdb.get_tag("filesystem"_s);
-						//auto fsTagRNodeSetBegin = pdb.tagdef_rnode_set_begin(fsTag);
-						//auto fsTagRNodeSetEnd = pdb.tagdef_rnode_set_end(fsTag);
-
-
-						//	check if file already exists
-						if (! pdb.find_rnode_tag_with(pathTag, fs_path.string()))
-						{
-
-							auto new_file = pdb.create_rnode();
-						
-							pdb.add_tag_to_rnode(pdb.get_tag("filesystem"_s), new_file, fs_root.string());
-							pdb.add_tag_to_rnode(pdb.get_tag("path"_s), new_file, fs_path.string());
-							pdb.add_tag_to_rnode(pdb.get_tag("filename"_s), new_file, fs_filename.string());
-
-							LOG(INFO) << "Created new file/rnode: " << *new_file;
-						}
-						else
-						{
-							LOG(WARNING) << "Didn't create new rnode. RNode already exists!";
-						}
-					}
-					else
-					{
-						LOG(WARNING) << "Couldn't create new rnode. File does not exist: " << p.string();
-					}
-				}
-				else
-				{
-					LOG(WARNING) << "Couldn't create new rnode. Not enough arguments.";
-				}
-				*/
-			} else
-			if (objArg == "scope"_s || objArg == "scopes"_s )
-			{
+			else if (objArg == "file"_s || objArg == "files"_s || objArg == "rnode"_s || objArg == "rnodes"_s)
+				create_rnodes(pdb, xtraArgs);	
+			else if (objArg == "scope"_s || objArg == "scopes"_s )
 				create_scopes(pdb, xtraArgs);
-				
-				//LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
-			}
 			else
-			{
 				LOG(WARNING) << "Invalid argument for new/create: " << objArg;
-			}
-
 
 		} else
 		if (cmdArg == "delete"_s)
 		{
 			if (objArg == "tag"_s || objArg == "tags"_s )
-			{
 				delete_tags(pdb, xtraArgs);
-				
-				/*
-				if (xtraArgs.size() >= 1)
-				{
-					auto tag_to_delete = pdb.get_tag(xtraArgs.at(0));
-					
-					if (tag_to_delete != pdb.tags_end())
-					{
-					LOG(INFO) << "Deleting tag: " << *tag_to_delete;
-					pdb.delete_tag(tag_to_delete);
-					LOG(INFO) << "Tag was deleted.";
-					}
-					else
-					{
-						LOG(INFO) << "Tag couldn't be found, so it was not deleted.";
-					}
-				} else
-				{
-					LOG(WARNING) << "Couldn't delete tag. Not enough arguments.";
-				}
-				*/
-			} else
-			if (objArg == "file"_s || objArg == "files"_s
-					|| objArg == "rnode"_s || objArg == "rnodes"_s)
-			{
+			else if (objArg == "file"_s || objArg == "files"_s || objArg == "rnode"_s || objArg == "rnodes"_s)
 				delete_rnodes(pdb, xtraArgs);
-				//auto new_file = pdb.create_rnode();
-				//LOG(WARNING) << "Deleted file/rnode: " << *new_file;
-			} else
-			if (objArg == "scope"_s || objArg == "scopes"_s )
-			{
+			else if (objArg == "scope"_s || objArg == "scopes"_s )
 				delete_scopes(pdb, xtraArgs);
-
-				//LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
-			}
-
+			else
+				LOG(WARNING) << "Invalid argument for delete: " << objArg;
 
 		} else
 		if (cmdArg == "add"_s)

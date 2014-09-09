@@ -10,16 +10,15 @@ source_dir=src/
 output_dir=bin/
 
 
-programs=plato_daemon plato_client plato_fuse
+programs=plato_daemon plato_client plato_fuse test_plato_daemon
 
 program_sources=$(addprefix $(source_dir),$(addsuffix .cpp,$(programs)))
 
 headers=FileMap.hpp PFile.hpp RNode.hpp TagDef.hpp TagMap.hpp ExampleTagDefs.hpp PlatoDB.hpp
 header_sources=$(addprefix $(source_dir),$(headers))
 
+#program_binaries=$(addprefix $(output_dir), $(programs))
 program_binaries=$(programs)
-#program_binaries=$(addprefix $(output_dir),$(addsuffix 
-
 
 
 
@@ -71,12 +70,23 @@ versioning_flags=-DPLATO_DAEMON_VERSION_ID='"${PLATO_DAEMON_VERSION_STRING}"' -D
 
 .PHONY: all
 all:	$(program_binaries)
+#all:	$(programs)
 
+#$(programs):	$(program_binaries)
 
 .SECONDEXPANSION:
+#$(program_binaries):	$(source_dir)$$@.cpp $(header_sources) $(MAKEFILE) 
+#	$(CXX) $(std_lib_flags) $(c_flags) $(include_dirs) $(libs) $(versioning_flags) $< -o $@
+
+
 $(program_binaries):	$(source_dir)$$@.cpp $(header_sources) $(MAKEFILE) 
 	$(CXX) $(std_lib_flags) $(c_flags) $(include_dirs) $(libs) $(versioning_flags) $< -o $(output_dir)$@
 
+
+$(program_binaries):	| $(output_dir)
+
+$(output_dir):
+	mkdir -p $(output_dir)
 
 .PHONY: run
 run:	$(program_binaries)

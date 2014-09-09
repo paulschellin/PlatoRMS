@@ -247,7 +247,7 @@ int main (int argc, char* argv[])
 	command_handler(std::cout, vm);
 
 
-	unsigned shm_region_size_bytes = 1048576; // estimate_space_requirements();
+	//unsigned shm_region_size_bytes = 1048576; // estimate_space_requirements();
 	const std::string shm_region_name (vm["shared-memory-name"].as<std::string>().c_str());
 	const std::string mmapped_filename(vm["memory-mapped-filename"].as<std::string>().c_str());
 

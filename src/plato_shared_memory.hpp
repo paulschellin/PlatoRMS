@@ -5,30 +5,10 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/managed_shared_memory.hpp>
-
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>
-
 #include <boost/interprocess/allocators/allocator.hpp>
-
-/*
-#include <boost/interprocess/containers/map.hpp>
-#include <boost/interprocess/containers/vector.hpp>
-*/
 #include <boost/interprocess/containers/string.hpp>
-/*
-#include <boost/interprocess/containers/deque.hpp>
-#include <boost/interprocess/containers/list.hpp>
-#include <boost/interprocess/containers/slist.hpp>
-
-#include <boost/interprocess/containers/set.hpp>
-#include <boost/interprocess/containers/flat_set.hpp>
-#include <boost/interprocess/containers/flat_map.hpp>
-
-
-#include <boost/interprocess/smart_ptr/shared_ptr.hpp>
-#include <boost/interprocess/smart_ptr/deleter.hpp>
-*/
 
 //////////////////////////////////////////////////////////////////////////////
 //					
@@ -41,8 +21,6 @@
 #include <memory>
 #include <exception>
 
-//using namespace boost::interprocess;
-
 namespace bi = boost::interprocess;
 
 
@@ -53,15 +31,11 @@ namespace bi = boost::interprocess;
 struct ManagedMappedType {
 	typedef bi::managed_mapped_file shared_memory_type;
 
-
-	
 };
 
 struct ManagedSharedType {
 	typedef bi::managed_shared_memory shared_memory_type;
 
-
-	
 };
 
 
@@ -81,39 +55,17 @@ struct MappedRegionType {
 
 */
 
-//Remove shared memory on construction and destruction
-   /*
-   struct shm_remove
-   {
-      shm_remove() { shared_memory_object::remove("MySharedMemory"); }
-      ~shm_remove(){ shared_memory_object::remove("MySharedMemory"); }
-   } remover;
-	*/
-
-	//shared_memory_object::remove(shm_region_name.c_str());
-
-
 template <typename SharedMemoryT>
 class GenericSharedMemory {
 
   public:
 	
-
-	//using namespace boost::interprocess;
-
 	typedef typename SharedMemoryT::segment_manager	segment_manager_t;
-	//typedef managed_mapped_file::segment_manager	segment_manager_t;
-	//typedef managed_shared_memory::segment_manager	segment_manager_t;
-
 
 	typedef bi::allocator<void, segment_manager_t>		void_allocator;
 	typedef bi::allocator<char, segment_manager_t>		char_allocator;
 
 	typedef bi::basic_string<char, std::char_traits<char>, char_allocator>	char_string;
-
-
-
-
 	
 
 	std::string shared_region_name;
@@ -124,12 +76,7 @@ class GenericSharedMemory {
 
 	std::size_t shared_region_size;
 
-	
-
 	std::shared_ptr<SharedMemoryT>	segment;
-
-
-	//void_allocator alloc_inst;
 
 
 	GenericSharedMemory(std::string region_name, std::size_t region_size = 1048576)
@@ -137,8 +84,7 @@ class GenericSharedMemory {
 		, shared_region_file_size(region_size)
 		, shared_region_offset()
 		, shared_region_size()
-		, segment(nullptr)//std::make_shared<SharedMemoryT>(open_or_create, shared_region_name.c_str(), shared_region_size))
-		//, alloc_inst(segment->get_segment_manager())
+		, segment(nullptr)
 	{
 		try
 		{
@@ -162,15 +108,10 @@ class GenericSharedMemory {
 	/*
 	GenericSharedMemory()
 	{
-
-
 	}
-	
 
 	~GenericSharedMemory()
 	{
-
-
 	}
 	*/
 

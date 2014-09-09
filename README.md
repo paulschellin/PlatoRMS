@@ -54,4 +54,28 @@ make plato_client
 make test_plato_daemon
 ```
 
+### Test the binaries
 
+```Shell
+bin/test_plato_daemon
+```
+
+```Shell
+bin/plato_client list tags
+```
+
+```Shell
+bin/plato_client list files
+```
+
+```Shell
+bin/plato_client create tag "new tag name" "new tag type" "new tag description"
+```
+
+```Shell
+bin/plato_client create rnode <filename>
+```
+
+```Shell
+bin/plato_client add "tag name" <filename> ["tag value"]
+```

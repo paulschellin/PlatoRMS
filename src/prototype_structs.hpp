@@ -51,60 +51,6 @@ typedef bi::basic_string<char, std::char_traits<char>, char_allocator>   char_st
 
 
 
-//std::string operator "" _s(const char* str, size_t /*length*/)
-//{
-//	return std::string(str);
-//}
-
-
-
-/*
-char_string operator "" _sh(const char* str, size_t)
-{
-	return char_string(str);
-}
-*/
-
-
-//	Advance a copy instead of the original iterator
-/*
-template <class InputIterator, class Distance>
-InputIterator
-advance_copy (const InputIterator& it, Distance n)
-{
-	auto result = it;
-	std::advance(result, n);
-	return result;
-}
-*/
-
-/*
-	This is a somewhat awkward function which is used when two
-	containers have indices which are linked. If you have an iterator
-	to the right element in container A, this function gives you the
-	iterator to the element associated with that in container B.
-  */
-  /*
-template <class InputIterator1, class InputIterator2, class InputIterator3>
-InputIterator3
-get_equivalent_iterator	( InputIterator1 first1		//	beginning of first range
-						, InputIterator2 position1	//	position desired of first range
-						, InputIterator3 first2)			//	beginning of second range
-{
-	auto result = first2;
-	
-	auto dist = std::distance(first1, position1);
-	std::advance(result, dist);
-
-	//for (auto it = first1; first1 != position1; ++it)
-	//	std::next(result);
-
-	return result;
-}
-*/
-
-
-
 struct RNode {
 	typedef std::size_t UuidT;
 
@@ -204,50 +150,43 @@ struct TagVal {
 
 
 
+//	TagDef Array container
+typedef TagDef<char_string> TagDefT;
 
+typedef bi::allocator<TagDefT, segment_manager_t> TagDefTAlloc;
 
+typedef bi::list<TagDefT, TagDefTAlloc> ListTagDefT;
+	
 
+//	RNode Array container
+typedef bi::allocator<RNode, segment_manager_t> RNodeAlloc;
 
-	//	TagDef Array container
-	typedef TagDef<char_string> TagDefT;
+typedef bi::list<RNode, RNodeAlloc> ListRNodeT;
+	
+	
+//	TagVal Array container
+typedef TagVal<char_string> TagValT;
 
+typedef bi::allocator<TagValT, segment_manager_t> TagValTAlloc;
 
-	typedef bi::allocator<TagDefT, segment_manager_t> TagDefTAlloc;
-
-	typedef bi::list<TagDefT, TagDefTAlloc> ListTagDefT;
+typedef bi::list<TagValT, TagValTAlloc> ListTagValT;
 
 	
 
-	//	RNode Array container
-	typedef bi::allocator<RNode, segment_manager_t> RNodeAlloc;
+//	New pair typedefs (use iterators)
+typedef std::pair<ListRNodeT::iterator, ListTagValT::iterator> RNodeValPairT;
 
-	typedef bi::list<RNode, RNodeAlloc> ListRNodeT;
-
-	
-	
-	//	TagVal Array container
-	typedef TagVal<char_string> TagValT;
-
-	typedef bi::allocator<TagValT, segment_manager_t> TagValTAlloc;
-
-	typedef bi::list<TagValT, TagValTAlloc> ListTagValT;
-
-	
-
-	//	New pair typedefs (use iterators)
-	typedef std::pair<ListRNodeT::iterator, ListTagValT::iterator> RNodeValPairT;
-
-	typedef std::pair<ListTagDefT::iterator, ListTagValT::iterator>TagDefValPairT;
+typedef std::pair<ListTagDefT::iterator, ListTagValT::iterator>TagDefValPairT;
 
 
 	
-	typedef bi::allocator<RNodeValPairT, segment_manager_t> RNodeValPairTAlloc;
+typedef bi::allocator<RNodeValPairT, segment_manager_t> RNodeValPairTAlloc;
 	
-	typedef bi::allocator<TagDefValPairT, segment_manager_t> TagDefValPairTAlloc;
+typedef bi::allocator<TagDefValPairT, segment_manager_t> TagDefValPairTAlloc;
 
-	typedef bi::list<RNodeValPairT, RNodeValPairTAlloc> ListRNodeValPairT;
+typedef bi::list<RNodeValPairT, RNodeValPairTAlloc> ListRNodeValPairT;
 	
-	typedef bi::list<TagDefValPairT, TagDefValPairTAlloc> ListTagDefValPairT;
+typedef bi::list<TagDefValPairT, TagDefValPairTAlloc> ListTagDefValPairT;
 
 
 
@@ -261,38 +200,7 @@ typedef bi::allocator<ListTagDefValPairT, segment_manager_t> ListTagDefValPairTA
 
 typedef bi::list<ListTagDefValPairT, ListTagDefValPairTAlloc> TagDefValPairTListList;
 
-/*
-template <typename PairT>
-struct pair_first_equal_to {
-	typedef typename PairT::first_type CompT;
-	CompT value;
 
-	pair_first_equal_to (const CompT& val)
-		: value(val)
-	{}
-	
-	bool operator() (const PairT& x) const {return x.first == value;}
-	typedef PairT first_argument_type;
-	
-	typedef bool result_type;
-};
-
-
-template <typename PairT>
-struct pair_second_equal_to {
-	typedef typename PairT::second_type CompT;
-	CompT value;
-
-	pair_second_equal_to (const CompT& val)
-		: value(val)
-	{}
-	
-	bool operator() (const PairT& x) const {return x.second == value;}
-	typedef PairT first_argument_type;
-	
-	typedef bool result_type;
-};
-*/
 
 std::ostream&
 operator<< (std::ostream& os, const RNodeValPairT& rn_tv_pair)
@@ -338,23 +246,12 @@ public:
 
 	PlatoDB () = delete;
 
-	//typedef managed_shared_memory ManagedSharedMemoryT;
+	//typedef bi::managed_shared_memory ManagedSharedMemoryT;
 	typedef bi::managed_mapped_file ManagedSharedMemoryT;
 
-	//template <typename ManagedSharedMemoryT>
 	PlatoDB (ManagedSharedMemoryT& segment)
 		: void_alloc(segment.get_segment_manager())
 	{
-	/*
-		allTagDefs = segment.find_or_construct<ListTagDefT>("TagDefArray").first;
-		allRNodes = segment.find_or_construct<ListRNodeT>("RNodeArray").first;
-		allTagVals = segment.find_or_construct<ListTagValT>("TagValArray").first;
-		td_tv_pair_sets_for_each_rn = segment.find_or_construct<TagDefValPairTListList>("RNodeValPairArray").first;
-		rn_tv_pair_sets_for_each_td = segment.find_or_construct<RNodeValPairTListList>("TagDefValPairArray").first;
-
-		last_uuid = segment.find_or_construct<std::size_t>("LastUuid").first;
-	*/
-
 		allTagDefs = segment.find_or_construct<ListTagDefT>("TagDefArray")(void_alloc);
 		allRNodes = segment.find_or_construct<ListRNodeT>("RNodeArray")(void_alloc);
 		allTagVals = segment.find_or_construct<ListTagValT>("TagValArray")(void_alloc);
@@ -365,7 +262,6 @@ public:
 	}
 
 	
-	//template <typename ManagedSharedMemoryT>
 	PlatoDB (ManagedSharedMemoryT& segment, const void_allocator& input_alloc)
 		: void_alloc(input_alloc)
 	{
@@ -502,14 +398,6 @@ public:
 		allTagDefs->emplace_front(name, type, description, void_alloc);
 		rn_tv_pair_sets_for_each_td->push_front(ListRNodeValPairT(void_alloc));
 		return allTagDefs->begin();
-		
-		
-
-		/*
-		allTagDefs->emplace_back(name, type, description, void_alloc);
-		rn_tv_pair_sets_for_each_td->push_back(ListRNodeValPairT(void_alloc));
-		return allTagDefs->begin();
-		*/
 	}
 	
 
@@ -550,8 +438,6 @@ public:
 	delete_tag (ListTagDefT::iterator tagDef)
 	{
 		//	First, check that tag still exists
-		//	<to do>
-
 		if (iter_is_in_range(allTagDefs->begin(), allTagDefs->end(), tagDef))
 		{
 
@@ -665,9 +551,6 @@ public:
 
 
 
-
-	
-
 	void
 	delete_rnode (ListRNodeT::iterator rnode)
 	{
@@ -693,8 +576,6 @@ public:
 		//	Finally, erase the rnode
 		allRNodes->erase(rnode);
 	}
-
-
 
 
 	template <typename StringInputT>
@@ -848,6 +729,3 @@ public:
 	}
 
 };
-
-
-

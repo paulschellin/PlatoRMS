@@ -91,6 +91,10 @@ parse_cmd_line_arguments (int argc, char* argv[])
 }
 
 
+//////////////////////////////////////////////////////////////////////////////
+//						Command functions: List
+//////////////////////////////////////////////////////////////////////////////
+
 void list_tag (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
 {
 	auto td = pdb.get_tag(xtraArgs.at(0));
@@ -108,26 +112,25 @@ void list_tags (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
 
 void list_rnode (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
 {
-				bfs::path p = bfs::canonical(bfs::path(xtraArgs.front()));
+	bfs::path p = bfs::canonical(bfs::path(xtraArgs.front()));
 
-				if (bfs::exists(p))
-				{
-					//auto rn = pdb.get_rnode(std::stoi(xtraArgs.at(0)));
-					
-					auto path_tag = pdb.get_tag("path"_s);
+	if (bfs::exists(p))
+	{
+		//auto rn = pdb.get_rnode(std::stoi(xtraArgs.at(0)));
+			
+		auto path_tag = pdb.get_tag("path"_s);
 
-					auto rn = pdb.get_rnode_tag_with(path_tag, p.relative_path().string());
+		auto rn = pdb.get_rnode_tag_with(path_tag, p.relative_path().string());
 
-					std::cout << "Print all tag pairs for the file:" << std::endl;
-					std::copy(pdb.rnode_tag_set_begin(rn), pdb.rnode_tag_set_end(rn)
-						, std::ostream_iterator<TagDefValPairT>(std::cout, "\n"));
+		std::cout << "Print all tag pairs for the file:" << std::endl;
+		std::copy(pdb.rnode_tag_set_begin(rn), pdb.rnode_tag_set_end(rn)
+			, std::ostream_iterator<TagDefValPairT>(std::cout, "\n"));
 
-				}
-				else
-				{
-					LOG(WARNING) << "Could not list file/rnode. The file: " << p << " does not exist!";
-				}
-
+	}
+	else
+	{
+		LOG(WARNING) << "Could not list file/rnode. The file: " << p << " does not exist!";
+	}
 }
 
 void list_rnodes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
@@ -139,6 +142,12 @@ void list_scopes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
 {
 	std::cout << "Hm... scopes don't appear to be implemented yet. Sorry!" << std::endl;
 }
+
+
+
+//////////////////////////////////////////////////////////////////////////////
+//						Command functions: Create
+//////////////////////////////////////////////////////////////////////////////
 
 void create_tags (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
 {
@@ -214,6 +223,12 @@ void create_scopes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
 	LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
 }
 
+
+
+//////////////////////////////////////////////////////////////////////////////
+//						Command functions: Delete
+//////////////////////////////////////////////////////////////////////////////
+
 void delete_tags (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
 {
 	if (xtraArgs.size() >= 1)
@@ -230,10 +245,11 @@ void delete_tags (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
 		{
 			LOG(INFO) << "Tag couldn't be found, so it was not deleted.";
 		}
-		} else
-		{
-			LOG(WARNING) << "Couldn't delete tag. Not enough arguments.";
-		}
+	}
+	else
+	{
+		LOG(WARNING) << "Couldn't delete tag. Not enough arguments.";
+	}
 }
 
 void delete_rnodes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
@@ -245,6 +261,12 @@ void delete_scopes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
 {
 	LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
 }
+
+
+
+//////////////////////////////////////////////////////////////////////////////
+//						Command functions: Add
+//////////////////////////////////////////////////////////////////////////////
 
 void add_tags (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
 {
@@ -293,6 +315,12 @@ void add_scopes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
 	LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
 }
 
+
+
+//////////////////////////////////////////////////////////////////////////////
+//						Command functions: Remove
+//////////////////////////////////////////////////////////////////////////////
+
 void remove_tags (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
 {
 	if (xtraArgs.size() == 2)
@@ -314,6 +342,12 @@ void remove_scopes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
 {
 	LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
 }
+
+
+
+//////////////////////////////////////////////////////////////////////////////
+//						Command functions: Modify
+//////////////////////////////////////////////////////////////////////////////
 
 void modify_tag (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
 {
@@ -342,6 +376,12 @@ void modify_scopes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
 {
 	LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
 }
+
+
+
+//////////////////////////////////////////////////////////////////////////////
+//						Main
+//////////////////////////////////////////////////////////////////////////////
 
 int main (int argc, char* argv[])
 {

@@ -246,7 +246,102 @@ void delete_scopes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
 	LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
 }
 
+void add_tags (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+	if (xtraArgs.size() >= 2)
+				{
+					auto td = pdb.get_tag(xtraArgs.at(0));
+					
+					bfs::path p = bfs::canonical(bfs::path(xtraArgs.at(1)));
+					auto path_tag = pdb.get_tag("path"_s);
+					
+					if (bfs::exists(p)){
+						auto rn = pdb.get_rnode_tag_with(path_tag, p.relative_path().string());
+						if (rn != pdb.rnodes_end())
+						{
+							std::string tagval ("");
+							
+							if (xtraArgs.size() >= 3)
+								tagval = std::string(xtraArgs.at(2));
 
+							pdb.add_tag_to_rnode(td, rn, tagval);
+							LOG(INFO) << "Added tag: " << *td << " to rnode: " << *rn << " with value: " << tagval << ".";
+
+						}
+						else
+						{
+							LOG(WARNING) << "Couldn't add tag to rnode because the filename specified does not exist in the Plato database.";
+
+						}
+					}
+					else
+					{
+						LOG(WARNING) << "Couldn't add tag to rnode because the filename specified does not exist.";
+					}
+
+					//pdb.add_tag_to_rnode(td, rn, ""_s);
+				} 
+}
+
+void add_rnodes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+	LOG(WARNING) << "Sorry, this syntax just doesn't make any sense!";
+}
+
+void add_scopes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+	LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
+}
+
+void remove_tags (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+	if (xtraArgs.size() == 2)
+				{
+					auto td = pdb.get_tag(xtraArgs.at(0));
+					//auto rn = pdb.get_rnode(xtraArgs.at(1));
+					//pdb.remove_tag_from_rnode(td, rn);
+				}
+}
+
+
+void remove_rnodes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+	LOG(WARNING) << "Sorry, this syntax just doesn't make any sense!";
+}
+
+
+void remove_scopes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+	LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
+}
+
+void modify_tag (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+				if (xtraArgs.size() == 2)
+				{
+					auto td = pdb.get_tag(xtraArgs.at(0));
+					std::size_t rn_uuid = std::stoi(xtraArgs.at(1));
+					auto rn = pdb.get_rnode(rn_uuid);
+					pdb.modify_rnode_tag(td, rn, ""_s);
+				} else
+				if (xtraArgs.size() == 3)
+				{
+					auto td = pdb.get_tag(xtraArgs.at(0));
+					std::size_t rn_uuid = std::stoi(xtraArgs.at(1));
+					auto rn = pdb.get_rnode(rn_uuid);
+					pdb.modify_rnode_tag(td, rn, xtraArgs.at(2));
+				}
+}
+
+void modify_rnodes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+
+}
+
+void modify_scopes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+	LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
+}
 
 int main (int argc, char* argv[])
 {
@@ -296,6 +391,7 @@ int main (int argc, char* argv[])
 
 		if (cmdArg == "list"_s)
 		{
+		
 			if (objArg == "tag"_s)
 				list_tag(pdb, xtraArgs);
 			else if (objArg == "tags"_s)
@@ -312,6 +408,7 @@ int main (int argc, char* argv[])
 		} else
 		if (cmdArg == "create"_s || cmdArg == "new"_s )
 		{
+
 			if (objArg == "tag"_s || objArg == "tags"_s )
 				create_tags(pdb, xtraArgs);
 			else if (objArg == "file"_s || objArg == "files"_s || objArg == "rnode"_s || objArg == "rnodes"_s)
@@ -324,6 +421,7 @@ int main (int argc, char* argv[])
 		} else
 		if (cmdArg == "delete"_s)
 		{
+
 			if (objArg == "tag"_s || objArg == "tags"_s )
 				delete_tags(pdb, xtraArgs);
 			else if (objArg == "file"_s || objArg == "files"_s || objArg == "rnode"_s || objArg == "rnodes"_s)
@@ -336,113 +434,44 @@ int main (int argc, char* argv[])
 		} else
 		if (cmdArg == "add"_s)
 		{
+
 			if (objArg == "tag"_s || objArg == "tags"_s )
-			{
-				if (xtraArgs.size() >= 2)
-				{
-					auto td = pdb.get_tag(xtraArgs.at(0));
-					
-					bfs::path p = bfs::canonical(bfs::path(xtraArgs.at(1)));
-					auto path_tag = pdb.get_tag("path"_s);
-					
-					if (bfs::exists(p)){
-						auto rn = pdb.get_rnode_tag_with(path_tag, p.relative_path().string());
-						if (rn != pdb.rnodes_end())
-						{
-							std::string tagval ("");
-							
-							if (xtraArgs.size() >= 3)
-								tagval = std::string(xtraArgs.at(2));
+				add_tags(pdb, xtraArgs);
+			else if (objArg == "file"_s || objArg == "files"_s || objArg == "rnode"_s || objArg == "rnodes"_s)
+				add_rnodes(pdb, xtraArgs);
+			else if (objArg == "scope"_s || objArg == "scopes"_s )
+				add_scopes(pdb, xtraArgs);
+			else
+				LOG(WARNING) << "Invalid argument for add: " << objArg;
 
-							pdb.add_tag_to_rnode(td, rn, tagval);
-							LOG(INFO) << "Added tag: " << *td << " to rnode: " << *rn << " with value: " << tagval << ".";
-
-						}
-						else
-						{
-							LOG(WARNING) << "Couldn't add tag to rnode because the filename specified does not exist in the Plato database.";
-
-						}
-					}
-					else
-					{
-						LOG(WARNING) << "Couldn't add tag to rnode because the filename specified does not exist.";
-					}
-
-					//pdb.add_tag_to_rnode(td, rn, ""_s);
-				} 
-				/*
-				else
-				if (xtraArgs.size() == 3)
-				{
-					auto td = pdb.get_tag(xtraArgs.at(0));
-					//auto rn = pdb.get_rnode(xtraArgs.at(1));
-					//pdb.add_tag_to_rnode(td, rn, xtraArgs.at(2));
-				}
-				*/
-			} else
-			if (objArg == "file"_s || objArg == "files"_s
-					|| objArg == "rnode"_s || objArg == "rnodes"_s)
-			{
-				LOG(WARNING) << "Sorry, this syntax just doesn't make any sense!";
-			} else
-			if (objArg == "scope"_s || objArg == "scopes"_s )
-			{
-				LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
-			}
 		} else
 		if (cmdArg == "remove"_s)
 		{
+
 			if (objArg == "tag"_s || objArg == "tags"_s )
-			{
-				if (xtraArgs.size() == 2)
-				{
-					auto td = pdb.get_tag(xtraArgs.at(0));
-					//auto rn = pdb.get_rnode(xtraArgs.at(1));
-					//pdb.remove_tag_from_rnode(td, rn);
-				} 
-			//	if (xtraArgs.size() >= 3)
-			//		pdb.create_tag(xtraArgs.at(0), xtraArgs.at(1), xtraArgs.at(2));
-			} else
-			if (objArg == "file"_s || objArg == "files"_s
-					|| objArg == "rnode"_s || objArg == "rnodes"_s)
-			{
-				LOG(WARNING) << "Sorry, this syntax just doesn't make any sense!";
-			} else
-			if (objArg == "scope"_s || objArg == "scopes"_s )
-			{
-				LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
-			}
+				remove_tags(pdb, xtraArgs);
+			else if (objArg == "file"_s || objArg == "files"_s || objArg == "rnode"_s || objArg == "rnodes"_s)
+				remove_rnodes(pdb, xtraArgs);
+			else if (objArg == "scope"_s || objArg == "scopes"_s )
+				remove_scopes(pdb, xtraArgs);
+			else
+				LOG(WARNING) << "Invalid argument for remove: " << objArg;
+
 		} else
 		if (cmdArg == "modify"_s)
 		{
+
 			if (objArg == "tag"_s || objArg == "tags"_s )
-			{
-				if (xtraArgs.size() == 2)
-				{
-					auto td = pdb.get_tag(xtraArgs.at(0));
-					std::size_t rn_uuid = std::stoi(xtraArgs.at(1));
-					auto rn = pdb.get_rnode(rn_uuid);
-					pdb.modify_rnode_tag(td, rn, ""_s);
-				} else
-				if (xtraArgs.size() == 3)
-				{
-					auto td = pdb.get_tag(xtraArgs.at(0));
-					std::size_t rn_uuid = std::stoi(xtraArgs.at(1));
-					auto rn = pdb.get_rnode(rn_uuid);
-					pdb.modify_rnode_tag(td, rn, xtraArgs.at(2));
-				}
-			} else
-			if (objArg == "file"_s || objArg == "files"_s
-					|| objArg == "rnode"_s || objArg == "rnodes"_s)
-			{
-				LOG(WARNING) << "Sorry, this syntax just doesn't make any sense!";
-			} else
-			if (objArg == "scope"_s || objArg == "scopes"_s )
-			{
-				LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
-			}
-		} 
+				modify_tag(pdb, xtraArgs);
+			else if (objArg == "file"_s || objArg == "files"_s || objArg == "rnode"_s || objArg == "rnodes"_s)
+				modify_rnodes(pdb, xtraArgs);
+			else if (objArg == "scope"_s || objArg == "scopes"_s )
+				modify_scopes(pdb, xtraArgs);
+			else
+				LOG(WARNING) << "Invalid argument for modify: " << objArg;
+				
+		} else
+			LOG(WARNING) << "Invalid command: " << cmdArg;
 	}
 
 	return 0;

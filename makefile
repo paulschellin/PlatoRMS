@@ -9,6 +9,7 @@
 source_dir=src/
 output_dir=bin/
 
+easylogging_dir=easyloggingpp/src
 
 programs=plato_daemon plato_client plato_fuse test_plato_daemon
 
@@ -31,7 +32,7 @@ c_flags=-Wall -Wextra -g -ggdb
 
 ld_flags=-Wall -Wextra -g -ggdb
 
-include_dirs=-I. -I src/ -I easyloggingpp/src $(shell pkg-config fuse --cflags)
+include_dirs=-I. -I src/ -I $(easylogging_dir) $(shell pkg-config fuse --cflags)
 
 boost_libs=-lboost_program_options -lboost_system -lboost_iostreams -lboost_filesystem -lboost_serialization
 

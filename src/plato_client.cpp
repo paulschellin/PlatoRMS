@@ -91,6 +91,163 @@ parse_cmd_line_arguments (int argc, char* argv[])
 }
 
 
+void list_tag (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+	auto td = pdb.get_tag(xtraArgs.at(0));
+
+	std::cout << "Print all file/rnode pairs for the tag:" << std::endl;
+	std::copy(pdb.tagdef_rnode_set_begin(td), pdb.tagdef_rnode_set_end(td)
+				, std::ostream_iterator<RNodeValPairT>(std::cout, "\n"));
+}
+
+
+void list_tags (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+	std::copy(pdb.tags_begin(), pdb.tags_end(), std::ostream_iterator<TagDefT>(std::cout, "\n"));
+}
+
+void list_rnode (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+				bfs::path p = bfs::canonical(bfs::path(xtraArgs.front()));
+
+				if (bfs::exists(p))
+				{
+					//auto rn = pdb.get_rnode(std::stoi(xtraArgs.at(0)));
+					
+					auto path_tag = pdb.get_tag("path"_s);
+
+					auto rn = pdb.get_rnode_tag_with(path_tag, p.relative_path().string());
+
+					std::cout << "Print all tag pairs for the file:" << std::endl;
+					std::copy(pdb.rnode_tag_set_begin(rn), pdb.rnode_tag_set_end(rn)
+						, std::ostream_iterator<TagDefValPairT>(std::cout, "\n"));
+
+				}
+				else
+				{
+					LOG(WARNING) << "Could not list file/rnode. The file: " << p << " does not exist!";
+				}
+
+}
+
+void list_rnodes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+	std::copy(pdb.rnodes_begin(), pdb.rnodes_end(), std::ostream_iterator<RNode>(std::cout, "\n"));
+}
+
+void list_scopes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+	std::cout << "Hm... scopes don't appear to be implemented yet. Sorry!" << std::endl;
+}
+
+void create_tags (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+	if (xtraArgs.size() >= 3)
+	{
+		auto new_tag = pdb.create_tag(xtraArgs.at(0), xtraArgs.at(1), xtraArgs.at(2));
+					
+		LOG(INFO) << "Created new tag: " << *new_tag;
+	} else
+	{
+		LOG(WARNING) << "Couldn't create new tag. Not enough arguments.";
+	}
+}
+
+void create_rnodes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+	if (xtraArgs.size() >= 1)
+	{
+		bfs::path p = bfs::canonical(bfs::path(xtraArgs.front()));
+
+		if (bfs::exists(p))
+		{
+			auto fs_root = p.root_path();
+			auto fs_path = p.relative_path();
+
+			auto fs_filename = p.filename();
+
+
+						//pdb.get_tag("
+						//pdb.add_tag_to_rnode(pdb.get_tag("filesystem"_s, new_file, fs_root.string());
+						//pdb.add_tag_to_rnode(pdb.get_tag("path"_s, new_file, fs_path.string());
+
+			auto pathTag = pdb.get_tag("path"_s);
+						//auto pathTagRNodeSetBegin = pdb.tagdef_rnode_set_begin(pathTag);
+						//auto pathTagRNodeSetEnd = pdb.tagdef_rnode_set_end(pathTag);
+
+						//auto fsTag = pdb.get_tag("filesystem"_s);
+						//auto fsTagRNodeSetBegin = pdb.tagdef_rnode_set_begin(fsTag);
+						//auto fsTagRNodeSetEnd = pdb.tagdef_rnode_set_end(fsTag);
+
+
+						//	check if file already exists
+			if (! pdb.find_rnode_tag_with(pathTag, fs_path.string()))
+			{
+
+				auto new_file = pdb.create_rnode();
+						
+				pdb.add_tag_to_rnode(pdb.get_tag("filesystem"_s), new_file, fs_root.string());
+				pdb.add_tag_to_rnode(pdb.get_tag("path"_s), new_file, fs_path.string());
+				pdb.add_tag_to_rnode(pdb.get_tag("filename"_s), new_file, fs_filename.string());
+
+				LOG(INFO) << "Created new file/rnode: " << *new_file;
+			}
+			else
+			{
+				LOG(WARNING) << "Didn't create new rnode. RNode already exists!";
+			}
+		}
+		else
+		{
+			LOG(WARNING) << "Couldn't create new rnode. File does not exist: " << p.string();
+		}
+	}
+	else
+	{
+		LOG(WARNING) << "Couldn't create new rnode. Not enough arguments.";
+	}
+
+}
+
+void create_scopes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+	LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
+}
+
+void delete_tags (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+	if (xtraArgs.size() >= 1)
+	{
+		auto tag_to_delete = pdb.get_tag(xtraArgs.at(0));
+					
+		if (tag_to_delete != pdb.tags_end())
+		{
+			LOG(INFO) << "Deleting tag: " << *tag_to_delete;
+			pdb.delete_tag(tag_to_delete);
+			LOG(INFO) << "Tag was deleted.";
+		}
+		else
+		{
+			LOG(INFO) << "Tag couldn't be found, so it was not deleted.";
+		}
+		} else
+		{
+			LOG(WARNING) << "Couldn't delete tag. Not enough arguments.";
+		}
+}
+
+void delete_rnodes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+	//	nothing to see here... yet.
+}
+
+void delete_scopes (PlatoDB& pdb, std::vector<std::string>& xtraArgs)
+{
+	LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
+}
+
+
+
 int main (int argc, char* argv[])
 {
 	logging_configuration();
@@ -121,33 +278,11 @@ int main (int argc, char* argv[])
 	}
 	else
 	{
-		//std::shared_ptr<managed_shared_memory> segment;
-		//std::string segment_name ("PlatoDaemonSharedMemory");
-		//unsigned shm_region_size_bytes = 1048576; // estimate_space_requirements();
 		const std::string mmapped_filename ("PlatoDaemonFile.mmap");
 		const std::string segment_name(mmapped_filename);
-		//std::shared_ptr<managed_mapped_file> segment;
-
 
 		GenericSharedMemory<managed_mapped_file> sh_memory (mmapped_filename);
 
-
-		/*
-		segment.reset(new managed_mapped_file(open_or_create, mmapped_filename.c_str(), shm_region_size_bytes));
-
-
-		try {
-			segment.reset(new managed_mapped_file(open_or_create, mmapped_filename.c_str(), shm_region_size_bytes));
-
-			//segment.reset(new managed_shared_memory(open_only, segment_name.c_str()));
-		} catch (const interprocess_exception& e) {
-			LOG(FATAL) << "An exception occurred while attempting to connect to the shared memory segment. The exception is: " << e.what();
-			std::exit(1);
-		} catch (...) {
-			LOG(FATAL) << "An unknown/unexpected exception occurred while attempting to connect to the shared memory segment.";
-			std::exit(1);
-		}
-		*/
 
 		LOG(INFO) << "Connected to shared memory segment \"" << segment_name << "\".";
 	
@@ -163,19 +298,24 @@ int main (int argc, char* argv[])
 		{
 			if (objArg == "tag"_s)
 			{
+				list_tag(pdb, xtraArgs);
+				/*
 				auto td = pdb.get_tag(xtraArgs.at(0));
 
 				std::cout << "Print all file/rnode pairs for the tag:" << std::endl;
 				std::copy(pdb.tagdef_rnode_set_begin(td), pdb.tagdef_rnode_set_end(td)
 						, std::ostream_iterator<RNodeValPairT>(std::cout, "\n"));
+				*/
 			} else
 			if (objArg == "tags"_s)
 			{
-				std::copy(pdb.tags_begin(), pdb.tags_end(), std::ostream_iterator<TagDefT>(std::cout, "\n"));
+				list_tags(pdb, xtraArgs);
+				//std::copy(pdb.tags_begin(), pdb.tags_end(), std::ostream_iterator<TagDefT>(std::cout, "\n"));
 			} else
 			if (objArg == "file"_s || objArg == "rnode"_s)
 			{
-
+				list_rnode(pdb, xtraArgs);
+				/*
 				bfs::path p = bfs::canonical(bfs::path(xtraArgs.front()));
 
 				if (bfs::exists(p))
@@ -195,14 +335,17 @@ int main (int argc, char* argv[])
 				{
 					LOG(WARNING) << "Could not list file/rnode. The file: " << p << " does not exist!";
 				}
+				*/
 			} else
 			if (objArg == "files"_s || objArg == "rnodes"_s)
 			{
-				std::copy(pdb.rnodes_begin(), pdb.rnodes_end(), std::ostream_iterator<RNode>(std::cout, "\n"));
+				list_rnodes(pdb, xtraArgs);
+				//std::copy(pdb.rnodes_begin(), pdb.rnodes_end(), std::ostream_iterator<RNode>(std::cout, "\n"));
 			} else
 			if (objArg == "scope"_s || objArg == "scopes"_s )
 			{
-				std::cout << "Hm... scopes don't appear to be implemented yet. Sorry!" << std::endl;
+				list_scopes(pdb, xtraArgs);
+				//std::cout << "Hm... scopes don't appear to be implemented yet. Sorry!" << std::endl;
 			}
 
 		} else
@@ -210,6 +353,9 @@ int main (int argc, char* argv[])
 		{
 			if (objArg == "tag"_s || objArg == "tags"_s )
 			{
+				create_tags(pdb, xtraArgs);
+
+				/*
 				if (xtraArgs.size() >= 3)
 				{
 					auto new_tag = pdb.create_tag(xtraArgs.at(0), xtraArgs.at(1), xtraArgs.at(2));
@@ -219,11 +365,14 @@ int main (int argc, char* argv[])
 				{
 					LOG(WARNING) << "Couldn't create new tag. Not enough arguments.";
 				}
+				*/
 			} else
 			if (objArg == "file"_s || objArg == "files"_s
 					|| objArg == "rnode"_s || objArg == "rnodes"_s)
 			{
+				create_rnodes(pdb, xtraArgs);
 
+				/*
 				if (xtraArgs.size() >= 1)
 				{
 					bfs::path p = bfs::canonical(bfs::path(xtraArgs.front()));
@@ -275,10 +424,13 @@ int main (int argc, char* argv[])
 				{
 					LOG(WARNING) << "Couldn't create new rnode. Not enough arguments.";
 				}
+				*/
 			} else
 			if (objArg == "scope"_s || objArg == "scopes"_s )
 			{
-				LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
+				create_scopes(pdb, xtraArgs);
+				
+				//LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
 			}
 			else
 			{
@@ -291,6 +443,9 @@ int main (int argc, char* argv[])
 		{
 			if (objArg == "tag"_s || objArg == "tags"_s )
 			{
+				delete_tags(pdb, xtraArgs);
+				
+				/*
 				if (xtraArgs.size() >= 1)
 				{
 					auto tag_to_delete = pdb.get_tag(xtraArgs.at(0));
@@ -309,16 +464,20 @@ int main (int argc, char* argv[])
 				{
 					LOG(WARNING) << "Couldn't delete tag. Not enough arguments.";
 				}
+				*/
 			} else
 			if (objArg == "file"_s || objArg == "files"_s
 					|| objArg == "rnode"_s || objArg == "rnodes"_s)
 			{
+				delete_rnodes(pdb, xtraArgs);
 				//auto new_file = pdb.create_rnode();
 				//LOG(WARNING) << "Deleted file/rnode: " << *new_file;
 			} else
 			if (objArg == "scope"_s || objArg == "scopes"_s )
 			{
-				LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
+				delete_scopes(pdb, xtraArgs);
+
+				//LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
 			}
 
 

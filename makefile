@@ -38,8 +38,12 @@ boost_libs=-lboost_program_options -lboost_system -lboost_iostreams -lboost_file
 
 fuse_libs=$(shell pkg-config fuse --cflags --libs)
 
-libs=$(boost_libs) $(fuse_libs)
+libs= -lpthread $(boost_libs) $(fuse_libs)
 
+OS := $(shell uname -s)
+ifeq ($(OS),Linux)
+libs += -lrt
+endif
 
 
 

@@ -270,7 +270,7 @@ int main (int argc, char* argv[])
 
 
 
-
+/*
 
 
 	auto filename_tag = pdb.create_tag("filename"_s, "string"_s, "the name of the file"_s);
@@ -337,7 +337,7 @@ int main (int argc, char* argv[])
 	pdb.delete_tag (tag_we_want_to_delete);
 
 	
-		
+	*/	
 
 
 	LOG(INFO) << "Plato daemon controller finishing. Daemon still running.";

@@ -21,11 +21,15 @@
 
 #include <cstdlib>	//	for std::exit()
 
+#include <boost/filesystem.hpp>
+
 #include <plato_shared_memory.hpp>
 #include <prototype_structs.hpp>
 
 #include <easylogging++.h>
 _INITIALIZE_EASYLOGGINGPP
+
+namespace bfs = boost::filesystem;
 
 using namespace boost::interprocess;
 
@@ -119,7 +123,7 @@ int main (int argc, char* argv[])
 	{
 		//std::shared_ptr<managed_shared_memory> segment;
 		//std::string segment_name ("PlatoDaemonSharedMemory");
-		unsigned shm_region_size_bytes = 1048576; // estimate_space_requirements();
+		//unsigned shm_region_size_bytes = 1048576; // estimate_space_requirements();
 		const std::string mmapped_filename ("PlatoDaemonFile.mmap");
 		const std::string segment_name(mmapped_filename);
 		//std::shared_ptr<managed_mapped_file> segment;
@@ -171,11 +175,26 @@ int main (int argc, char* argv[])
 			} else
 			if (objArg == "file"_s || objArg == "rnode"_s)
 			{
-				auto rn = pdb.get_rnode(std::stoi(xtraArgs.at(0)));
-				std::cout << "Print all tag pairs for the file:" << std::endl;
-				std::copy(pdb.rnode_tag_set_begin(rn), pdb.rnode_tag_set_end(rn)
-					, std::ostream_iterator<TagDefValPairT>(std::cout, "\n"));
 
+				bfs::path p = bfs::canonical(bfs::path(xtraArgs.front()));
+
+				if (bfs::exists(p))
+				{
+					//auto rn = pdb.get_rnode(std::stoi(xtraArgs.at(0)));
+					
+					auto path_tag = pdb.get_tag("path"_s);
+
+					auto rn = pdb.get_rnode_tag_with(path_tag, p.relative_path().string());
+
+					std::cout << "Print all tag pairs for the file:" << std::endl;
+					std::copy(pdb.rnode_tag_set_begin(rn), pdb.rnode_tag_set_end(rn)
+						, std::ostream_iterator<TagDefValPairT>(std::cout, "\n"));
+
+				}
+				else
+				{
+					LOG(WARNING) << "Could not list file/rnode. The file: " << p << " does not exist!";
+				}
 			} else
 			if (objArg == "files"_s || objArg == "rnodes"_s)
 			{
@@ -194,6 +213,7 @@ int main (int argc, char* argv[])
 				if (xtraArgs.size() >= 3)
 				{
 					auto new_tag = pdb.create_tag(xtraArgs.at(0), xtraArgs.at(1), xtraArgs.at(2));
+					
 					LOG(INFO) << "Created new tag: " << *new_tag;
 				} else
 				{
@@ -203,8 +223,98 @@ int main (int argc, char* argv[])
 			if (objArg == "file"_s || objArg == "files"_s
 					|| objArg == "rnode"_s || objArg == "rnodes"_s)
 			{
-				auto new_file = pdb.create_rnode();
-				LOG(WARNING) << "Created new file/rnode: " << *new_file;
+
+				if (xtraArgs.size() >= 1)
+				{
+					bfs::path p = bfs::canonical(bfs::path(xtraArgs.front()));
+
+					if (bfs::exists(p))
+					{
+						auto fs_root = p.root_path();
+						auto fs_path = p.relative_path();
+
+						auto fs_filename = p.filename();
+
+
+						//pdb.get_tag("
+						//pdb.add_tag_to_rnode(pdb.get_tag("filesystem"_s, new_file, fs_root.string());
+						//pdb.add_tag_to_rnode(pdb.get_tag("path"_s, new_file, fs_path.string());
+
+						auto pathTag = pdb.get_tag("path"_s);
+						//auto pathTagRNodeSetBegin = pdb.tagdef_rnode_set_begin(pathTag);
+						//auto pathTagRNodeSetEnd = pdb.tagdef_rnode_set_end(pathTag);
+
+						//auto fsTag = pdb.get_tag("filesystem"_s);
+						//auto fsTagRNodeSetBegin = pdb.tagdef_rnode_set_begin(fsTag);
+						//auto fsTagRNodeSetEnd = pdb.tagdef_rnode_set_end(fsTag);
+
+
+						//	check if file already exists
+						if (! pdb.find_rnode_tag_with(pathTag, fs_path.string()))
+						{
+
+							auto new_file = pdb.create_rnode();
+						
+							pdb.add_tag_to_rnode(pdb.get_tag("filesystem"_s), new_file, fs_root.string());
+							pdb.add_tag_to_rnode(pdb.get_tag("path"_s), new_file, fs_path.string());
+							pdb.add_tag_to_rnode(pdb.get_tag("filename"_s), new_file, fs_filename.string());
+
+							LOG(INFO) << "Created new file/rnode: " << *new_file;
+						}
+						else
+						{
+							LOG(WARNING) << "Didn't create new rnode. RNode already exists!";
+						}
+					}
+					else
+					{
+						LOG(WARNING) << "Couldn't create new rnode. File does not exist: " << p.string();
+					}
+				}
+				else
+				{
+					LOG(WARNING) << "Couldn't create new rnode. Not enough arguments.";
+				}
+			} else
+			if (objArg == "scope"_s || objArg == "scopes"_s )
+			{
+				LOG(WARNING) << "Hm... scopes don't appear to be implemented yet. Sorry!";
+			}
+			else
+			{
+				LOG(WARNING) << "Invalid argument for new/create: " << objArg;
+			}
+
+
+		} else
+		if (cmdArg == "delete"_s)
+		{
+			if (objArg == "tag"_s || objArg == "tags"_s )
+			{
+				if (xtraArgs.size() >= 1)
+				{
+					auto tag_to_delete = pdb.get_tag(xtraArgs.at(0));
+					
+					if (tag_to_delete != pdb.tags_end())
+					{
+					LOG(INFO) << "Deleting tag: " << *tag_to_delete;
+					pdb.delete_tag(tag_to_delete);
+					LOG(INFO) << "Tag was deleted.";
+					}
+					else
+					{
+						LOG(INFO) << "Tag couldn't be found, so it was not deleted.";
+					}
+				} else
+				{
+					LOG(WARNING) << "Couldn't delete tag. Not enough arguments.";
+				}
+			} else
+			if (objArg == "file"_s || objArg == "files"_s
+					|| objArg == "rnode"_s || objArg == "rnodes"_s)
+			{
+				//auto new_file = pdb.create_rnode();
+				//LOG(WARNING) << "Deleted file/rnode: " << *new_file;
 			} else
 			if (objArg == "scope"_s || objArg == "scopes"_s )
 			{
@@ -217,18 +327,48 @@ int main (int argc, char* argv[])
 		{
 			if (objArg == "tag"_s || objArg == "tags"_s )
 			{
-				if (xtraArgs.size() == 2)
+				if (xtraArgs.size() >= 2)
 				{
 					auto td = pdb.get_tag(xtraArgs.at(0));
-					//auto rn = pdb.get_rnode(xtraArgs.at(1));
+					
+					bfs::path p = bfs::canonical(bfs::path(xtraArgs.at(1)));
+					auto path_tag = pdb.get_tag("path"_s);
+					
+					if (bfs::exists(p)){
+						auto rn = pdb.get_rnode_tag_with(path_tag, p.relative_path().string());
+						if (rn != pdb.rnodes_end())
+						{
+							std::string tagval ("");
+							
+							if (xtraArgs.size() >= 3)
+								tagval = std::string(xtraArgs.at(2));
+
+							pdb.add_tag_to_rnode(td, rn, tagval);
+							LOG(INFO) << "Added tag: " << *td << " to rnode: " << *rn << " with value: " << tagval << ".";
+
+						}
+						else
+						{
+							LOG(WARNING) << "Couldn't add tag to rnode because the filename specified does not exist in the Plato database.";
+
+						}
+					}
+					else
+					{
+						LOG(WARNING) << "Couldn't add tag to rnode because the filename specified does not exist.";
+					}
+
 					//pdb.add_tag_to_rnode(td, rn, ""_s);
-				} else
+				} 
+				/*
+				else
 				if (xtraArgs.size() == 3)
 				{
 					auto td = pdb.get_tag(xtraArgs.at(0));
 					//auto rn = pdb.get_rnode(xtraArgs.at(1));
 					//pdb.add_tag_to_rnode(td, rn, xtraArgs.at(2));
 				}
+				*/
 			} else
 			if (objArg == "file"_s || objArg == "files"_s
 					|| objArg == "rnode"_s || objArg == "rnodes"_s)

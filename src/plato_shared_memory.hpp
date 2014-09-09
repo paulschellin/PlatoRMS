@@ -129,7 +129,7 @@ class GenericSharedMemory {
 	std::shared_ptr<SharedMemoryT>	segment;
 
 
-	void_allocator alloc_inst;
+	//void_allocator alloc_inst;
 
 
 	GenericSharedMemory(std::string region_name, std::size_t region_size = 1048576)
@@ -138,7 +138,7 @@ class GenericSharedMemory {
 		, shared_region_offset()
 		, shared_region_size()
 		, segment(nullptr)//std::make_shared<SharedMemoryT>(open_or_create, shared_region_name.c_str(), shared_region_size))
-		, alloc_inst(segment->get_segment_manager())
+		//, alloc_inst(segment->get_segment_manager())
 	{
 		try
 		{

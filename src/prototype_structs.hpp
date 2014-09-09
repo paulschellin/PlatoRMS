@@ -33,21 +33,30 @@
 #include <string>
 #include <array>
 
-using namespace boost::interprocess;
+
+#include <utilities.hpp>
+
+//using namespace boost::interprocess;
+
+namespace bi = boost::interprocess;
+
+
 
 //Typedefs of allocators and containers
-typedef managed_mapped_file::segment_manager                       segment_manager_t;
+typedef bi::managed_mapped_file::segment_manager                       segment_manager_t;
 //typedef managed_shared_memory::segment_manager                       segment_manager_t;
-typedef allocator<void, segment_manager_t>                           void_allocator;
-typedef allocator<char, segment_manager_t>                           char_allocator;
-typedef basic_string<char, std::char_traits<char>, char_allocator>   char_string;
+typedef bi::allocator<void, segment_manager_t>                           void_allocator;
+typedef bi::allocator<char, segment_manager_t>                           char_allocator;
+typedef bi::basic_string<char, std::char_traits<char>, char_allocator>   char_string;
 
 
 
-std::string operator "" _s(const char* str, size_t /*length*/)
-{
-	return std::string(str);
-}
+//std::string operator "" _s(const char* str, size_t /*length*/)
+//{
+//	return std::string(str);
+//}
+
+
 
 /*
 char_string operator "" _sh(const char* str, size_t)
@@ -58,6 +67,7 @@ char_string operator "" _sh(const char* str, size_t)
 
 
 //	Advance a copy instead of the original iterator
+/*
 template <class InputIterator, class Distance>
 InputIterator
 advance_copy (const InputIterator& it, Distance n)
@@ -66,7 +76,7 @@ advance_copy (const InputIterator& it, Distance n)
 	std::advance(result, n);
 	return result;
 }
-
+*/
 
 /*
 	This is a somewhat awkward function which is used when two
@@ -74,6 +84,7 @@ advance_copy (const InputIterator& it, Distance n)
 	to the right element in container A, this function gives you the
 	iterator to the element associated with that in container B.
   */
+  /*
 template <class InputIterator1, class InputIterator2, class InputIterator3>
 InputIterator3
 get_equivalent_iterator	( InputIterator1 first1		//	beginning of first range
@@ -90,6 +101,7 @@ get_equivalent_iterator	( InputIterator1 first1		//	beginning of first range
 
 	return result;
 }
+*/
 
 
 
@@ -136,6 +148,14 @@ struct TagDef {
 	}
 
 	friend
+	bool
+	operator== (const TagDef& lhs, const TagDef& rhs)
+	{
+		return ( lhs.name == rhs.name );
+	}
+
+
+	friend
 	std::ostream&
 	operator<< (std::ostream& os, const TagDef& td)
 	{
@@ -162,6 +182,16 @@ struct TagVal {
 		: value(in_value.begin(), in_value.end(), void_alloc)
 	{ }
 
+	template <typename StringInputT>
+	bool
+	compare (StringInputT compare_value)
+	{
+		if (value.size() != compare_value.size())
+			return false;
+		
+		return std::equal(value.begin(), value.end(), compare_value.begin());
+	}
+
 	friend
 	std::ostream&
 	operator<< (std::ostream& os, const TagVal& tv)
@@ -182,25 +212,25 @@ struct TagVal {
 	typedef TagDef<char_string> TagDefT;
 
 
-	typedef allocator<TagDefT, segment_manager_t> TagDefTAlloc;
+	typedef bi::allocator<TagDefT, segment_manager_t> TagDefTAlloc;
 
-	typedef list<TagDefT, TagDefTAlloc> ListTagDefT;
+	typedef bi::list<TagDefT, TagDefTAlloc> ListTagDefT;
 
 	
 
 	//	RNode Array container
-	typedef allocator<RNode, segment_manager_t> RNodeAlloc;
+	typedef bi::allocator<RNode, segment_manager_t> RNodeAlloc;
 
-	typedef list<RNode, RNodeAlloc> ListRNodeT;
+	typedef bi::list<RNode, RNodeAlloc> ListRNodeT;
 
 	
 	
 	//	TagVal Array container
 	typedef TagVal<char_string> TagValT;
 
-	typedef allocator<TagValT, segment_manager_t> TagValTAlloc;
+	typedef bi::allocator<TagValT, segment_manager_t> TagValTAlloc;
 
-	typedef list<TagValT, TagValTAlloc> ListTagValT;
+	typedef bi::list<TagValT, TagValTAlloc> ListTagValT;
 
 	
 
@@ -211,27 +241,27 @@ struct TagVal {
 
 
 	
-	typedef allocator<RNodeValPairT, segment_manager_t> RNodeValPairTAlloc;
+	typedef bi::allocator<RNodeValPairT, segment_manager_t> RNodeValPairTAlloc;
 	
-	typedef allocator<TagDefValPairT, segment_manager_t> TagDefValPairTAlloc;
+	typedef bi::allocator<TagDefValPairT, segment_manager_t> TagDefValPairTAlloc;
 
-	typedef list<RNodeValPairT, RNodeValPairTAlloc> ListRNodeValPairT;
+	typedef bi::list<RNodeValPairT, RNodeValPairTAlloc> ListRNodeValPairT;
 	
-	typedef list<TagDefValPairT, TagDefValPairTAlloc> ListTagDefValPairT;
+	typedef bi::list<TagDefValPairT, TagDefValPairTAlloc> ListTagDefValPairT;
 
 
 
 //	The "list-of-lists" used to store the lists of tags/rnodes associated with the list of rnodes/tags, respectively.
 
-typedef allocator<ListRNodeValPairT, segment_manager_t> ListRNodeValPairTAlloc;
+typedef bi::allocator<ListRNodeValPairT, segment_manager_t> ListRNodeValPairTAlloc;
 
-typedef list<ListRNodeValPairT, ListRNodeValPairTAlloc> RNodeValPairTListList;
+typedef bi::list<ListRNodeValPairT, ListRNodeValPairTAlloc> RNodeValPairTListList;
 
-typedef allocator<ListTagDefValPairT, segment_manager_t> ListTagDefValPairTAlloc;
+typedef bi::allocator<ListTagDefValPairT, segment_manager_t> ListTagDefValPairTAlloc;
 
-typedef list<ListTagDefValPairT, ListTagDefValPairTAlloc> TagDefValPairTListList;
+typedef bi::list<ListTagDefValPairT, ListTagDefValPairTAlloc> TagDefValPairTListList;
 
-
+/*
 template <typename PairT>
 struct pair_first_equal_to {
 	typedef typename PairT::first_type CompT;
@@ -262,7 +292,7 @@ struct pair_second_equal_to {
 	
 	typedef bool result_type;
 };
-
+*/
 
 std::ostream&
 operator<< (std::ostream& os, const RNodeValPairT& rn_tv_pair)
@@ -309,19 +339,29 @@ public:
 	PlatoDB () = delete;
 
 	//typedef managed_shared_memory ManagedSharedMemoryT;
-	typedef managed_mapped_file ManagedSharedMemoryT;
+	typedef bi::managed_mapped_file ManagedSharedMemoryT;
 
 	//template <typename ManagedSharedMemoryT>
 	PlatoDB (ManagedSharedMemoryT& segment)
 		: void_alloc(segment.get_segment_manager())
 	{
-		allTagDefs = segment.find<ListTagDefT>("TagDefArray").first;
-		allRNodes = segment.find<ListRNodeT>("RNodeArray").first;
-		allTagVals = segment.find<ListTagValT>("TagValArray").first;
-		td_tv_pair_sets_for_each_rn = segment.find<TagDefValPairTListList>("RNodeValPairArray").first;
-		rn_tv_pair_sets_for_each_td = segment.find<RNodeValPairTListList>("TagDefValPairArray").first;
+	/*
+		allTagDefs = segment.find_or_construct<ListTagDefT>("TagDefArray").first;
+		allRNodes = segment.find_or_construct<ListRNodeT>("RNodeArray").first;
+		allTagVals = segment.find_or_construct<ListTagValT>("TagValArray").first;
+		td_tv_pair_sets_for_each_rn = segment.find_or_construct<TagDefValPairTListList>("RNodeValPairArray").first;
+		rn_tv_pair_sets_for_each_td = segment.find_or_construct<RNodeValPairTListList>("TagDefValPairArray").first;
 
-		last_uuid = segment.find<std::size_t>("LastUuid").first;
+		last_uuid = segment.find_or_construct<std::size_t>("LastUuid").first;
+	*/
+
+		allTagDefs = segment.find_or_construct<ListTagDefT>("TagDefArray")(void_alloc);
+		allRNodes = segment.find_or_construct<ListRNodeT>("RNodeArray")(void_alloc);
+		allTagVals = segment.find_or_construct<ListTagValT>("TagValArray")(void_alloc);
+		td_tv_pair_sets_for_each_rn = segment.find_or_construct<TagDefValPairTListList>("RNodeValPairArray")(void_alloc);
+		rn_tv_pair_sets_for_each_td = segment.find_or_construct<RNodeValPairTListList>("TagDefValPairArray")(void_alloc);
+
+		last_uuid = segment.find_or_construct<std::size_t>("LastUuid")();
 	}
 
 	
@@ -450,9 +490,26 @@ public:
 	//create_tag (char_string name, char_string type, char_string description)
 	create_tag (StringInputT name, StringInputT type, StringInputT description)
 	{
+		//	Check first to make sure that the tag doesn't exist
+		auto search_for_tag = get_tag(name);
+
+		if (search_for_tag != allTagDefs->end())
+		{
+			return search_for_tag;
+			
+		}
+
 		allTagDefs->emplace_front(name, type, description, void_alloc);
 		rn_tv_pair_sets_for_each_td->push_front(ListRNodeValPairT(void_alloc));
 		return allTagDefs->begin();
+		
+		
+
+		/*
+		allTagDefs->emplace_back(name, type, description, void_alloc);
+		rn_tv_pair_sets_for_each_td->push_back(ListRNodeValPairT(void_alloc));
+		return allTagDefs->begin();
+		*/
 	}
 	
 
@@ -495,6 +552,8 @@ public:
 		//	First, check that tag still exists
 		//	<to do>
 
+		if (iter_is_in_range(allTagDefs->begin(), allTagDefs->end(), tagDef))
+		{
 
 		//	Need to find all tag instances which will be removed
 		auto taggedFiles = get_rnode_set_for_tagdef (tagDef);
@@ -523,6 +582,12 @@ public:
 		
 		//	Finally, erase the tagdef
 		allTagDefs->erase(tagDef);
+		
+		}
+		else
+		{
+			std::cout << "Tag couldn't be deleted, it didn't exist!" << std::endl;
+		}
 	}
 
 	/*
@@ -722,6 +787,44 @@ public:
 
 		//	Or we could use remove_if:
 		//rn_tv_pair_set->remove_if(pair_first_equal_to(rnode));
+	}
+
+	template <typename StringInputT>
+	bool
+	//ListRNodeT::iterator
+	find_rnode_tag_with (ListTagDefT::iterator tagdef, StringInputT value)
+	{
+		auto rnode_set = get_rnode_set_for_tagdef(tagdef);
+
+		auto found_iter = std::find_if(rnode_set->begin(), rnode_set->end(), 
+		
+			[&](RNodeValPairT x) {
+				return (x.second->compare(value));
+			}			
+			);
+
+		//return found_iter;
+
+		return (found_iter != rnode_set->end());
+	}
+
+	template <typename StringInputT>
+	
+	ListRNodeT::iterator
+	get_rnode_tag_with (ListTagDefT::iterator tagdef, StringInputT value)
+	{
+		auto rnode_set = get_rnode_set_for_tagdef(tagdef);
+
+		auto found_iter = std::find_if(rnode_set->begin(), rnode_set->end(), 
+		
+			[&](RNodeValPairT x) {
+				return (x.second->compare(value));
+			}			
+			);
+
+		return (found_iter->first);
+
+		//return (found_iter != rnode_set->end());
 	}
 
 
